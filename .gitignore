@@ -1,1 +1,6 @@
-/target
+/target/
+/Cargo.lock
+/Hexagn-rust.iml
+
+/test.hxgn
+/out.urcl
