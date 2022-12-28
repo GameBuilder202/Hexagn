@@ -1,10 +1,10 @@
-use std::io::Write;
 use std::process::exit;
 
-use crate::{unwrap_or_err, print_error};
+use crate::compiler::print_error;
+use crate::unwrap_or_err;
 use crate::util::{get_line, find_nth, draw_arrows};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token
 {
 	pub lineno:   usize,
@@ -15,7 +15,7 @@ pub struct Token
 	pub end:   usize
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType
 {
 	// Builtin datatypes
@@ -66,31 +66,24 @@ pub enum TokenType
 
 	URCLBlock,
 
-	Return,
+	Return
 }
 
-macro_rules! println_err {
-	($($args:tt)*) => {
-		std::io::stderr().write_fmt(format_args!($($args)*)).unwrap();
-		std::io::stderr().write_fmt(format_args!("\n")).unwrap()
-	};
-}
-
-const SignedIntTypes: [&str; 4] = [
+const SIGNED_INT_TYPES: [&str; 4] = [
 	"int8",
 	"int16",
 	"int32",
 	"int64"
 ];
 
-const UnsignedIntTypes: [&str; 4] = [
+const UNSIGNED_INT_TYPES: [&str; 4] = [
 	"uint8",
 	"uint16",
 	"uint32",
 	"uint64"
 ];
 
-const FloatTypes: [&str; 2] = [
+const FLOAT_TYPES: [&str; 2] = [
 	"float32",
 	"float64"
 ];
@@ -402,7 +395,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				res.push(
 					Token {
 						lineno,
-						tok_type: TokenType::GT,
+						tok_type: TokenType::LT,
 						val:      data.to_string(),
 
 						start: buf.line_pos(&lineno),
@@ -439,7 +432,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 
 			if !buf.in_bounds()
 			{
-				print_error!("Expected character after ' at line {}", buf, src, start, buf.line_pos(&lineno), lineno);
+				print_error("Expected character after ' at line {}", src, start, buf.line_pos(&lineno), lineno);
 				exit(1)
 			}
 			if buf.current("", &Default::default()) == '\\'
@@ -462,7 +455,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					'\\' => _char = '\\',
 
 					_ => {
-						print_error!("Invalid escape character at line {}", buf, src, start, buf.line_pos(&lineno), lineno);
+						print_error("Invalid escape character at line {}", src, start, buf.line_pos(&lineno), lineno);
 						exit(1)
 					}
 				}
@@ -482,7 +475,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				}
 			) != '\''
 			{
-				print_error!("Expected closing ' at line {}", buf, src, start, buf.line_pos(&lineno), lineno);
+				print_error("Expected closing ' at line {}", src, start, buf.line_pos(&lineno), lineno);
 				exit(1)
 			}
 
@@ -526,7 +519,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 						'\\' => _str += "\\",
 
 						_ => {
-							print_error!("Invalid escape character at line {}", buf, src, start, buf.line_pos(&lineno), lineno);
+							print_error("Invalid escape character at line {}", src, start, buf.line_pos(&lineno), lineno);
 							exit(1)
 						}
 					}
@@ -534,7 +527,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 
 				else if buf.current("", &Default::default()) == '\n'
 				{
-					print_error!("Unterminated string at line {}", buf, src, start, buf.line_pos(&lineno), lineno);
+					print_error("Unterminated string at line {}", src, start, buf.line_pos(&lineno), lineno);
 					exit(1)
 				}
 
@@ -549,7 +542,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 			res.push(
 				Token {
 					lineno,
-					tok_type: TokenType::Char,
+					tok_type: TokenType::Str,
 					val:      _str,
 
 					start,
@@ -604,7 +597,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 
 			let end = buf.line_pos(&lineno);
 
-			if SignedIntTypes.contains(&word.as_str())
+			if SIGNED_INT_TYPES.contains(&word.as_str())
 			{
 				res.push(
 					Token {
@@ -617,7 +610,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					}
 				)
 			}
-			else if UnsignedIntTypes.contains(&word.as_str())
+			else if UNSIGNED_INT_TYPES.contains(&word.as_str())
 			{
 				res.push(
 					Token {
@@ -630,7 +623,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					}
 				)
 			}
-			else if FloatTypes.contains(&word.as_str())
+			else if FLOAT_TYPES.contains(&word.as_str())
 			{
 				res.push(
 					Token {
@@ -851,7 +844,7 @@ impl Buffer
 
 	pub fn current(&self, err: &str, pos: &PosInfo) -> char
 	{
-		unwrap_or_err!(self.data.chars().nth(self.index), (self, pos.src, pos.start, pos.end, pos.lineno, err))
+		unwrap_or_err!(self.data.chars().nth(self.index), (pos.src, pos.start, pos.end, pos.lineno, err))
 	}
 
 	pub fn pos(&self) -> usize

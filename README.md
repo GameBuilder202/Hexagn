@@ -9,7 +9,7 @@ The syntax of Hexagn will stay the same in this version as the previous one.
 Make sure you have cargo installed [from here](https://rustup.rs/).
 Then run:
 ```bash
-cargo build
+cargo build --release
 cargo install --path .
 ```
 
