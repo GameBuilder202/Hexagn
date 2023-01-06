@@ -2,14 +2,14 @@ use std::process::exit;
 
 use crate::compiler::print_error;
 use crate::unwrap_or_err;
-use crate::util::{get_line, find_nth, draw_arrows};
+use crate::util::find_nth;
 
 #[derive(Debug, Clone)]
 pub struct Token
 {
 	pub lineno:   usize,
 	pub tok_type: TokenType,
-	pub val:      String,
+	pub val:	  String,
 
 	pub start: usize,
 	pub end:   usize
@@ -115,7 +115,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Semicolon,
-					val:      ";".to_string(),
+					val:	  ";".to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -133,7 +133,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					Token {
 						lineno,
 						tok_type: TokenType::EQ,
-						val:      "==".to_string(),
+						val:	  "==".to_string(),
 
 						start,
 						end: buf.line_pos(&lineno)
@@ -146,7 +146,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					Token {
 						lineno,
 						tok_type: TokenType::Assign,
-						val:      data.to_string(),
+						val:	  data.to_string(),
 
 						start: buf.line_pos(&lineno),
 						end:   buf.line_pos(&lineno)
@@ -161,7 +161,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Plus,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -174,7 +174,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Minus,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -187,7 +187,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Mult,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -200,7 +200,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Div,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -213,7 +213,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Mod,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -227,7 +227,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Plus,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -240,7 +240,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Minus,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -253,7 +253,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Mult,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -266,7 +266,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Div,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -280,7 +280,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::OpenParen,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -293,7 +293,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::CloseParen,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -307,7 +307,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Comma,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -321,7 +321,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::OpenBrace,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -334,7 +334,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::CloseBrace,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -352,7 +352,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					Token {
 						lineno,
 						tok_type: TokenType::GTE,
-						val:      ">=".to_string(),
+						val:	  ">=".to_string(),
 
 						start,
 						end: buf.line_pos(&lineno)
@@ -365,7 +365,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					Token {
 						lineno,
 						tok_type: TokenType::GT,
-						val:      data.to_string(),
+						val:	  data.to_string(),
 
 						start: buf.line_pos(&lineno),
 						end:   buf.line_pos(&lineno)
@@ -383,7 +383,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					Token {
 						lineno,
 						tok_type: TokenType::LTE,
-						val:      "<=".to_string(),
+						val:	  "<=".to_string(),
 
 						start,
 						end: buf.line_pos(&lineno)
@@ -396,7 +396,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					Token {
 						lineno,
 						tok_type: TokenType::LT,
-						val:      data.to_string(),
+						val:	  data.to_string(),
 
 						start: buf.line_pos(&lineno),
 						end:   buf.line_pos(&lineno)
@@ -414,7 +414,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					Token {
 						lineno,
 						tok_type: TokenType::NEQ,
-						val:      "!=".to_string(),
+						val:	  "!=".to_string(),
 
 						start,
 						end: buf.line_pos(&lineno)
@@ -483,7 +483,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Char,
-					val:      _char.to_string(),
+					val:	  _char.to_string(),
 
 					start,
 					end: buf.line_pos(&lineno)
@@ -543,7 +543,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Str,
-					val:      _str,
+					val:	  _str,
 
 					start,
 					end: buf.line_pos(&lineno)
@@ -557,7 +557,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Dot,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -571,7 +571,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 				Token {
 					lineno,
 					tok_type: TokenType::Colon,
-					val:      data.to_string(),
+					val:	  data.to_string(),
 
 					start: buf.line_pos(&lineno),
 					end:   buf.line_pos(&lineno)
@@ -743,7 +743,7 @@ pub fn tokenize(src: &String) -> Vec<Token>
 					}
 				)
 			}
-			
+
 			else if word == "return"
 			{
 				res.push(
@@ -868,13 +868,13 @@ struct PosInfo
 
 impl Default for PosInfo
 {
-    fn default() -> Self
+	fn default() -> Self
 	{
-        Self {
+		Self {
 			src: String::new(),
 			start: 0,
 			end: 0,
 			lineno: 0
 		}
-    }
+	}
 }

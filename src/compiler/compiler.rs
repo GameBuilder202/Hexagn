@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use crate::{unwrap_or_err, compiler as other_compiler};
+use crate::unwrap_or_err;
 use super::lexer::tokenize;
 use super::ast::*;
 
@@ -21,9 +21,10 @@ pub fn compiler(args: &Args)
 	src = format!("\n{}", src);
 
 	let toks = tokenize(&src);
-	for tok in &toks
-	{
-		println!("{:?}", tok);
-	}
-	let _prog = make_ast(&src, &toks);
+	println!("{:#?}", toks);
+
+	println!("#------------------------#");
+
+	let prog = make_ast(&src, &toks);
+	println!("{:#?}", prog);
 }

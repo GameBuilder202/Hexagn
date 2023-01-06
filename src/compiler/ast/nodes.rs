@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Program
 {
 	pub statements: Vec<Node>
@@ -10,6 +11,7 @@ impl Program
 	}
 }
 
+#[derive(Debug)]
 pub enum Node
 {
 	VarDefineNode {
@@ -22,7 +24,7 @@ pub enum Node
 		expr:  Expr
 	},
 	FunctionNode {
-		retType: Type,
+		ret_type: Type,
 		name: String,
 		args: Vec<(Type, String)>,
 		body: Program
@@ -43,6 +45,7 @@ pub enum Node
 	URCLBlockNode(String)
 }
 
+#[derive(Debug)]
 pub enum Type
 {
 	Named(String),
@@ -51,6 +54,7 @@ pub enum Type
 	Const(Box<Type>)
 }
 
+#[derive(Debug)]
 pub enum Operation
 {
 	Add,
@@ -60,6 +64,7 @@ pub enum Operation
 	Mod
 }
 
+#[derive(Debug)]
 pub enum Comparison
 {
 	EQ,
@@ -70,10 +75,12 @@ pub enum Comparison
 	GTE
 }
 
+#[derive(Debug)]
 pub enum Expr
 {
 	Number(i64),
 	Ident(String),
+	Str(String),
 	BiOp {
 		lhs: Box<Expr>,
 		op:  Operation,

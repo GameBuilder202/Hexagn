@@ -10,7 +10,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program
 
 	while buf.in_bounds()
 	{
-		let current = buf.current("");
+		let current = buf.current("").clone();
 		match current.tok_type
 		{
 			// Variable def or function def
@@ -24,15 +24,38 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program
 					if curr.tok_type == TokenType::Mult { var_type = Type::Ptr(Box::new(var_type)) }
 					buf.advance()
 				}
-				buf.advance();
-				// let ident = buf_consume!(buf, TokenType::Identifier, src, "Expected identifier after type");
+				let ident = buf_consume!(buf, (TokenType::Identifier), src, "Expected identifier after type");
+				let op = buf_consume!(buf, (TokenType::Assign, TokenType::OpenParen, TokenType::Semicolon), src, "Expected '=' or '(' or ';' after identifier");
+
+				match op.tok_type
+				{
+					TokenType::Assign => {
+						if current.tok_type == TokenType::Void
+						{
+							print_error("Cannot have void for variable type", src, current.start, current.end, current.lineno);
+							exit(2)
+						}
+						if !buf.in_bounds()
+						{
+							print_error("Expected expression after '='", src, op.start, op.end, op.lineno);
+							exit(2)
+						}
+						let expr = expr_parser(&mut buf, src);
+						prog.statements.push(Node::VarDefineNode { typ: var_type, ident: ident.val, expr })
+					}
+					_ => {}
+				}
 			}
+
+			TokenType::Semicolon => {}
 
 			_ => {
 				print_error("Unexpected token", src, current.start, current.end, current.lineno);
 				exit(2)
 			}
 		}
+
+		buf.advance()
 	}
 
 	prog
@@ -70,18 +93,18 @@ impl TokenBuffer
 
 	pub fn current(&self, err: &str) -> &Token
 	{
-		let tmp = &self.toks[self.pos - 1];
+		let tmp = if self.pos != 0 { &self.toks[self.pos - 1] } else { &self.toks[self.pos] };
 		unwrap_or_err!(&self.toks.get(self.pos), (self.src, tmp.start, tmp.end, tmp.lineno, err))
 	}
 }
 
 #[macro_export]
 macro_rules! buf_consume {
-	($buf:expr, $p:pat, $src:ident, $err:expr) => {
+	($buf:expr, ($($p:pat),+), $src:ident, $err:expr) => {
 		{
-			let curr = $buf.current($err);
+			let curr = $buf.current($err).clone();
 			match curr.tok_type {
-				$p => { $buf.advance(); curr },
+				$($p)|+ => { $buf.advance(); curr },
 				_ => {
 					print_error($err, $src, curr.start, curr.end, curr.lineno);
 					exit(2)
@@ -89,4 +112,73 @@ macro_rules! buf_consume {
 			}
 		}
 	};
+}
+
+fn expr_parser(buf: &mut TokenBuffer, src: &String) -> Expr
+{
+	fn factor(buf: &mut TokenBuffer, src: &String) -> Expr
+	{
+		let tok = buf_consume!(buf, (TokenType::Num, TokenType::Identifier, TokenType::Str, TokenType::OpenParen), src, "Expected number or identifier or string or open paren");
+		match tok.tok_type
+		{
+			TokenType::Num => {
+				Expr::Number(tok.val.parse::<i64>().unwrap())
+			}
+			TokenType::Identifier => {
+				if buf.current("Expected operation or '(' or ';' after identifier").tok_type == TokenType::OpenParen
+				{
+					todo!("Make Functions stuff")
+				}
+				Expr::Ident(tok.val)
+			}
+			TokenType::String => {
+				Expr::Str(tok.val)
+			}
+			TokenType::OpenBrace => {
+				let node = expr(buf, src);
+				buf_consume!(buf, (TokenType::CloseBrace), src, "");
+				node
+			}
+			_ => { unreachable!() }
+		}
+	}
+
+	fn tok_to_op(tok: &Token) -> Operation
+	{
+		match tok.tok_type
+		{
+			TokenType::Plus  => Operation::Add,
+			TokenType::Minus => Operation::Sub,
+			TokenType::Mult  => Operation::Mult,
+			TokenType::Div   => Operation::Div,
+			TokenType::Mod   => Operation::Mod,
+			_ => { unreachable!() }
+		}
+	}
+
+	fn term(buf: &mut TokenBuffer, src: &String) -> Expr
+	{
+		let mut node = factor(buf, src);
+		while buf.current("Expected operation").tok_type == TokenType::Mult || buf.current("").tok_type == TokenType::Div
+		{
+			let op = buf.current("").clone();
+			buf.advance();
+			node = Expr::BiOp { lhs: Box::new(node), op: tok_to_op(&op), rhs: Box::new(factor(buf, src)) };
+		}
+		node
+	}
+
+	fn expr(buf: &mut TokenBuffer, src: &String) -> Expr
+	{
+		let mut node = term(buf, src);
+		while buf.current("Expected operation").tok_type == TokenType::Plus || buf.current("").tok_type == TokenType::Minus
+		{
+			let op = buf.current("").clone();
+			buf.advance();
+			node = Expr::BiOp { lhs: Box::new(node), op: tok_to_op(&op), rhs: Box::new(term(buf, src)) };
+		}
+		node
+	}
+
+	expr(buf, src)
 }
