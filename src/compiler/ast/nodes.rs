@@ -17,7 +17,7 @@ pub enum Node
 	VarDefineNode {
 		typ:   Type,
 		ident: String,
-		expr:  Expr
+		expr:  Option<Expr>
 	},
 	VarAssignNode {
 		ident: String,

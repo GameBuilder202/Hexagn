@@ -16,14 +16,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program
 			// Variable def or function def
 			TokenType::Void | TokenType::Int | TokenType::Uint | TokenType::Float | TokenType::String | TokenType::Char => {
 				// Making the type
-				let mut var_type = Type::Named(current.val.clone());
-				while buf.in_bounds()
-				{
-					let curr = buf.current("");
-					if curr.tok_type == TokenType::Identifier { break; }
-					if curr.tok_type == TokenType::Mult { var_type = Type::Ptr(Box::new(var_type)) }
-					buf.advance()
-				}
+				let var_type = make_type(&mut buf);
 				let ident = buf_consume!(buf, (TokenType::Identifier), src, "Expected identifier after type");
 				let op = buf_consume!(buf, (TokenType::Assign, TokenType::OpenParen, TokenType::Semicolon), src, "Expected '=' or '(' or ';' after identifier");
 
@@ -41,21 +34,78 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program
 							exit(2)
 						}
 						let expr = expr_parser(&mut buf, src);
-						prog.statements.push(Node::VarDefineNode { typ: var_type, ident: ident.val, expr })
+						buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after expression");
+						prog.statements.push(Node::VarDefineNode { typ: var_type, ident: ident.val, expr: Some(expr) })
 					}
-					_ => {}
+
+					TokenType::Semicolon => {
+						prog.statements.push(Node::VarDefineNode { typ: var_type, ident: ident.val, expr: None });
+						buf.advance()
+					}
+
+					TokenType::OpenParen => {
+						let mut args = vec![];
+						if !buf.in_bounds() || !(is_datatype(buf.current("")) || buf.current("").tok_type == TokenType::CloseParen)
+						{
+							print_error("Expected type or '(' after ')'", src, op.start, op.end, op.lineno);
+							exit(2)
+						}
+
+						while buf.in_bounds() && buf.current("").tok_type != TokenType::CloseParen
+						{
+							let arg_type = make_type(&mut buf);
+							let arg_ident = buf_consume!(buf, (TokenType::Identifier), src, "Expected identifier after type");
+							args.push((arg_type, arg_ident.val));
+
+							if !buf.in_bounds()
+							{
+								print_error("Expected ')' or ',' after identifier", src, arg_ident.start, arg_ident.end, arg_ident.lineno);
+								exit(2)
+							}
+							let curr = buf.current("");
+							if curr.tok_type == TokenType::CloseParen { break }
+							if curr.tok_type != TokenType::Semicolon
+							{
+								print_error("Expectee ')' or ',' after identifier", src, curr.start, curr.end, curr.lineno);
+								exit(2)
+							}
+							buf.advance()
+						}
+
+						buf.advance();
+						buf_consume!(buf, (TokenType::OpenBrace), src, "Expected '{' for function body");
+
+						let mut body = vec![];
+						let mut scope = 0;
+						while buf.in_bounds()
+						{
+							let curr = buf.current("").clone();
+							if curr.tok_type == TokenType::OpenBrace { scope += 1 }
+							else if curr.tok_type == TokenType::CloseBrace
+							{
+								if scope == 0 { break }
+								scope -= 1;
+							}
+							body.push(curr);
+							buf.advance()
+						}
+						buf_consume!(buf, (TokenType::CloseBrace), src, "Expected closing '}' for function body");
+						let func_body = make_ast(src, &body);
+						prog.statements.push(Node::FunctionNode { ret_type: var_type, name: ident.val, args, body: func_body })
+					}
+
+					_ => { unreachable!() }
 				}
 			}
 
 			TokenType::Semicolon => {}
 
-			_ => {
+			tok => {
+				println!("{:#?}", tok);
 				print_error("Unexpected token", src, current.start, current.end, current.lineno);
 				exit(2)
 			}
 		}
-
-		buf.advance()
 	}
 
 	prog
@@ -100,7 +150,7 @@ impl TokenBuffer
 
 #[macro_export]
 macro_rules! buf_consume {
-	($buf:expr, ($($p:pat),+), $src:ident, $err:expr) => {
+	($buf:ident, ($($p:pat),+), $src:ident, $err:expr) => {
 		{
 			let curr = $buf.current($err).clone();
 			match curr.tok_type {
@@ -112,6 +162,19 @@ macro_rules! buf_consume {
 			}
 		}
 	};
+}
+
+fn make_type(buf: &mut TokenBuffer) -> Type
+{
+	let mut var_type = Type::Named(buf.current("").val.clone());
+	while buf.in_bounds()
+	{
+		let curr = buf.current("");
+		if curr.tok_type == TokenType::Identifier { return var_type; }
+		if curr.tok_type == TokenType::Mult { var_type = Type::Ptr(Box::new(var_type)) }
+		buf.advance()
+	}
+	var_type
 }
 
 fn expr_parser(buf: &mut TokenBuffer, src: &String) -> Expr
@@ -181,4 +244,14 @@ fn expr_parser(buf: &mut TokenBuffer, src: &String) -> Expr
 	}
 
 	expr(buf, src)
+}
+
+fn is_datatype(tok: &Token) -> bool
+{
+	tok.tok_type == TokenType::Void
+		|| tok.tok_type == TokenType::Int
+		|| tok.tok_type == TokenType::Uint
+		|| tok.tok_type == TokenType::Float
+		|| tok.tok_type == TokenType::String
+		|| tok.tok_type == TokenType::Character
 }
