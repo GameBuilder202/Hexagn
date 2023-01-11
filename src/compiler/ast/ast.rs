@@ -164,14 +164,14 @@ macro_rules! buf_consume {
 	};
 }
 
-fn make_type(buf: &mut TokenBuffer) -> Type
+fn make_type(buf: &mut TokenBuffer) -> HType
 {
-	let mut var_type = Type::Named(buf.current("").val.clone());
+	let mut var_type = HType::Named(buf.current("").val.clone());
 	while buf.in_bounds()
 	{
 		let curr = buf.current("");
 		if curr.tok_type == TokenType::Identifier { return var_type; }
-		if curr.tok_type == TokenType::Mult { var_type = Type::Ptr(Box::new(var_type)) }
+		if curr.tok_type == TokenType::Mult { var_type = HType::Ptr(Box::new(var_type)) }
 		buf.advance()
 	}
 	var_type

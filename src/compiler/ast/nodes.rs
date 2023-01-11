@@ -15,7 +15,7 @@ impl Program
 pub enum Node
 {
 	VarDefineNode {
-		typ:   Type,
+		typ:   HType,
 		ident: String,
 		expr:  Option<Expr>
 	},
@@ -24,9 +24,9 @@ pub enum Node
 		expr:  Expr
 	},
 	FunctionNode {
-		ret_type: Type,
+		ret_type: HType,
 		name: String,
-		args: Vec<(Type, String)>,
+		args: Vec<(HType, String)>,
 		body: Program
 	},
 	FuncCallNode {
@@ -45,13 +45,13 @@ pub enum Node
 	URCLBlockNode(String)
 }
 
-#[derive(Debug)]
-pub enum Type
+#[derive(Debug, Clone)]
+pub enum HType
 {
 	Named(String),
-	Ptr(Box<Type>),
-	Arr(Box<Type>),
-	Const(Box<Type>)
+	Ptr(Box<HType>),
+	Arr(Box<HType>),
+	Const(Box<HType>)
 }
 
 #[derive(Debug)]

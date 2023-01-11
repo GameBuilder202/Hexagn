@@ -1,0 +1,6 @@
+minreg 8
+bits 64
+.main
+
+.nested_func
+
