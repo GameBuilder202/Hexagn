@@ -1,12 +1,11 @@
 minreg 8
 bits 64
-.main
+._Hx4mainint8
 .L0
-    imm r8 123
-    add r6 r8 r0
-    imm r7 4
-    add r8 r6 r7
-    add r6 r8 r0
-    imm r7 2
-    mlt r8 r6 r7
+    imm r7 5
+    imm r5 1
+    imm r6 1
+    add r8 r7 r0
+    mlt r7 r6 r8
+    add r8 r5 r7
 

@@ -48,7 +48,7 @@ fn compile(prog: Program, builder: &mut ModuleBuilder, functions: &mut HashMap<S
     for statement in prog.statements {
         match statement {
             Node::FunctionNode { ret_type, name, args, body } => {
-                functions.insert(name.clone(), builder.new_function(&name, &(hexagn_to_ir_fargs(args)
+                functions.insert(name.clone(), builder.new_function(&make_mangled_name(name.clone(), ret_type.clone(), args.clone()), &(hexagn_to_ir_fargs(args)
                     .iter()
                     .map(|(s, v)| {
                         (s.as_str(), v.clone())
@@ -132,39 +132,17 @@ fn compile_expr(expr: Option<Expr>, builder: &mut ModuleBuilder, functions: &mut
     }
 }
 
-impl HType {
-    fn to_ir_type(self) -> Type {
-        match self {
-            HType::Named(n) => {
-                match n.as_str() {
-                    "int32" => {
-                        Type::Integer(true, 32)
-                    },
-                    "int16" => {
-                        Type::Integer(true, 16)
-                    },
-                    "int8" => {
-                        Type::Integer(true, 8)
-                    },
-                    "uint32" => {
-                        Type::Integer(false, 32)
-                    },
-                    "uint16" => {
-                        Type::Integer(false, 16)
-                    },
-                    "uint8" => {
-                        Type::Integer(false, 8)
-                    }
-                    _ => todo!("Unimplimented type."),
-                }
-            },
-            _ => todo!("Unimplimented type."),
-        }
-    }
-}
 
 fn hexagn_to_ir_fargs(hexagn_args: Vec<(HType, String)>) -> Vec<(String, Type)> {
     hexagn_args.into_iter().map(|(typ, s)| {
         (s, typ.to_ir_type())
     }).collect()
+}
+
+fn make_mangled_name(name: String, ret_type: HType, args: Vec<(HType, String)>) -> String {
+    let mut args_mangled = String::new();
+    for (arg, _) in args {
+        args_mangled += &arg.to_string();
+    }
+    format!("_Hx{}{}{}{}", name.len(), name, ret_type, args_mangled)
 }
