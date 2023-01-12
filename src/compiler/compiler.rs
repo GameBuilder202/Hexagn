@@ -57,6 +57,7 @@ fn compile(prog: Program, builder: &mut ModuleBuilder, functions: &mut HashMap<S
                 let b = builder.push_block().unwrap();
                 builder.switch_to_block(b);
                 compile(body, builder, functions, variables);
+                builder.set_terminator(Terminator::ReturnVoid);
             },
             Node::VarDefineNode { typ, ident, expr } => {
                 let val = compile_expr(expr, builder, functions, variables, typ.clone().to_ir_type());

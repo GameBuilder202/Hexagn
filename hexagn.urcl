@@ -8,4 +8,5 @@ bits 64
     add r8 r7 r0
     mlt r7 r6 r8
     add r8 r5 r7
+    ret
 
