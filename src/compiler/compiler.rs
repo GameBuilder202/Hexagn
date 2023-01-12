@@ -106,7 +106,7 @@ fn compile_expr(expr: Option<Expr>, builder: &mut ModuleBuilder, functions: &mut
         }
         Expr::Comp { lhs, comp, rhs } => {
             let lhs_val = compile_expr(Some((*lhs).clone()), builder, functions, variables, typ.clone());
-            let rhs_val = compile_expr(Some((*lhs).clone()), builder, functions, variables, typ.clone());
+            let rhs_val = compile_expr(Some((*rhs).clone()), builder, functions, variables, typ.clone());
             match comp {
                 Comparison::EQ => {
                     builder.push_instruction(&typ, Operation::Eq(lhs_val, rhs_val)).unwrap()

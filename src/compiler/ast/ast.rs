@@ -134,7 +134,7 @@ impl TokenBuffer
 	{
 		self.pos += 1
 	}
-
+    #[allow(dead_code)]
 	pub fn next(&mut self, err: &str) -> &Token
 	{
 		self.advance();
