@@ -1,0 +1,14 @@
+/* module hexagn */
+
+@0: function i8 @_Hx4mainint8() {
+    #0 : i32 // var2
+    #1 : i32 // var
+0: // preds =
+    %0 = i32 iconst 0000000000000005
+    %2 = i32 iconst 0000000000000001
+    %3 = i32 iconst 0000000000000001
+    %4 = i32 id %0
+    %5 = i32 muli %3, %4
+    %6 = i32 addi %2, %5
+    noterm
+}

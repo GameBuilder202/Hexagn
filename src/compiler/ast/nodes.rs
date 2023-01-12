@@ -1,3 +1,8 @@
+#![allow(dead_code)]
+
+use std::fmt::Display;
+
+use codegem::ir::Type;
 #[derive(Debug)]
 pub struct Program
 {
@@ -15,7 +20,7 @@ impl Program
 pub enum Node
 {
 	VarDefineNode {
-		typ:   Type,
+		typ:   HType,
 		ident: String,
 		expr:  Option<Expr>
 	},
@@ -24,9 +29,9 @@ pub enum Node
 		expr:  Expr
 	},
 	FunctionNode {
-		ret_type: Type,
+		ret_type: HType,
 		name: String,
-		args: Vec<(Type, String)>,
+		args: Vec<(HType, String)>,
 		body: Program
 	},
 	FuncCallNode {
@@ -45,16 +50,58 @@ pub enum Node
 	URCLBlockNode(String)
 }
 
-#[derive(Debug)]
-pub enum Type
+#[derive(Debug, Clone)]
+pub enum HType
 {
 	Named(String),
-	Ptr(Box<Type>),
-	Arr(Box<Type>),
-	Const(Box<Type>)
+	Ptr(Box<HType>),
+	Arr(Box<HType>),
+	Const(Box<HType>)
 }
 
-#[derive(Debug)]
+impl HType {
+    pub fn to_ir_type(self) -> Type {
+        match self {
+            HType::Named(n) => {
+                match n.as_str() {
+                    "int32" => {
+                        Type::Integer(true, 32)
+                    },
+                    "int16" => {
+                        Type::Integer(true, 16)
+                    },
+                    "int8" => {
+                        Type::Integer(true, 8)
+                    },
+                    "uint32" => {
+                        Type::Integer(false, 32)
+                    },
+                    "uint16" => {
+                        Type::Integer(false, 16)
+                    },
+                    "uint8" => {
+                        Type::Integer(false, 8)
+                    }
+                    _ => todo!("Unimplimented type."),
+                }
+            },
+            _ => todo!("Unimplimented type."),
+        }
+    }
+}
+
+impl Display for HType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HType::Named(s) => write!(f, "{}", s),
+            HType::Ptr(s) => write!(f, "PTR_{}", *s),
+            HType::Const(s) => write!(f, "CONST_{}", *s),
+            HType::Arr(s) => write!(f, "ARR_{}", *s)
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Operation
 {
 	Add,
@@ -64,7 +111,7 @@ pub enum Operation
 	Mod
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Comparison
 {
 	EQ,
@@ -75,7 +122,7 @@ pub enum Comparison
 	GTE
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr
 {
 	Number(i64),

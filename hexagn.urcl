@@ -1,0 +1,12 @@
+minreg 8
+bits 64
+._Hx4mainint8
+.L0
+    imm r7 5
+    imm r5 1
+    imm r6 1
+    add r8 r7 r0
+    mlt r7 r6 r8
+    add r8 r5 r7
+    ret
+
