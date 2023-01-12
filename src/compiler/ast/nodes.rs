@@ -54,7 +54,7 @@ pub enum HType
 	Const(Box<HType>)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Operation
 {
 	Add,
@@ -64,7 +64,7 @@ pub enum Operation
 	Mod
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Comparison
 {
 	EQ,
@@ -75,7 +75,7 @@ pub enum Comparison
 	GTE
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Expr
 {
 	Number(i64),

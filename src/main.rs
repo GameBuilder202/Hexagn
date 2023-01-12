@@ -25,34 +25,29 @@ fn main()
 			no_main: args.no_main
 		}
 	);
-
-    let mut vcodestr;
+    let irprint = ir.to_string();
     match args.target.to_lowercase().as_str() {
         "urcl" => {
             let mut vcode = ir.lower_to_vcode::<_, UrclSelector>();
             vcode.allocate_regs::<RegAlloc>();
             vcode.emit_assembly();
-            vcodestr = vcode.to_string();
         },
         "rv64" | "riscv" => {
             let mut vcode = ir.lower_to_vcode::<_, RvSelector>();
             vcode.allocate_regs::<RegAlloc>();
             vcode.emit_assembly();
-            vcodestr = vcode.to_string();
         },
         "x86_64" | "x86" | "x64" => {
             let mut vcode = ir.lower_to_vcode::<_, X64Selector>();
             vcode.allocate_regs::<RegAlloc>();
             vcode.emit_assembly();
-            vcodestr = vcode.to_string();
         }
         _ => panic!("Unknown backend")
     }
 
     if args.emit_ir {
         let mut file = std::fs::File::create("ir.cgemir").unwrap();
-        file.write_all(vcodestr.as_bytes()).unwrap();
-
+        file.write_all(irprint.as_bytes()).unwrap();
     }
 }
 

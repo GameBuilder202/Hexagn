@@ -1,6 +1,16 @@
-;;; module = hexagn
+/* module hexagn */
 
-F0:
-main:
-F1:
-nested_func:
+@0: function i8 @main() {
+    #0 : i32 // some_var
+    #1 : i32 // var_2
+    #2 : i32 // var_3
+0: // preds =
+    %0 = i32 iconst 000000000000007b
+    %2 = i32 id %0
+    %3 = i32 iconst 0000000000000004
+    %4 = i32 addi %2, %3
+    %6 = i32 id %4
+    %7 = i32 iconst 0000000000000002
+    %8 = i32 muli %6, %7
+    noterm
+}

@@ -1,6 +1,12 @@
 minreg 8
 bits 64
 .main
-
-.nested_func
+.L0
+    imm r8 123
+    add r6 r8 r0
+    imm r7 4
+    add r8 r6 r7
+    add r6 r8 r0
+    imm r7 2
+    mlt r8 r6 r7
 
