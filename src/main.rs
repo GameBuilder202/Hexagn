@@ -16,7 +16,7 @@ fn main()
 	{
 		todo!()
 	}
-    
+	
 
 	let ir = compiler(
 		&compiler::Args {
@@ -25,30 +25,30 @@ fn main()
 			no_main: args.no_main
 		}
 	);
-    let irprint = ir.to_string();
-    match args.target.to_lowercase().as_str() {
-        "urcl" => {
-            let mut vcode = ir.lower_to_vcode::<_, UrclSelector>();
-            vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
-        },
-        "rv64" | "riscv" => {
-            let mut vcode = ir.lower_to_vcode::<_, RvSelector>();
-            vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
-        },
-        "x86_64" | "x86" | "x64" => {
-            let mut vcode = ir.lower_to_vcode::<_, X64Selector>();
-            vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
-        }
-        _ => panic!("Unknown backend")
-    }
+	let irprint = ir.to_string();
+	match args.target.to_lowercase().as_str() {
+		"urcl" => {
+			let mut vcode = ir.lower_to_vcode::<_, UrclSelector>();
+			vcode.allocate_regs::<RegAlloc>();
+			vcode.emit_assembly();
+		},
+		"rv64" | "riscv" => {
+			let mut vcode = ir.lower_to_vcode::<_, RvSelector>();
+			vcode.allocate_regs::<RegAlloc>();
+			vcode.emit_assembly();
+		},
+		"x86_64" | "x86" | "x64" => {
+			let mut vcode = ir.lower_to_vcode::<_, X64Selector>();
+			vcode.allocate_regs::<RegAlloc>();
+			vcode.emit_assembly();
+		}
+		_ => panic!("Unknown backend")
+	}
 
-    if args.emit_ir {
-        let mut file = std::fs::File::create("ir.cgemir").unwrap();
-        file.write_all(irprint.as_bytes()).unwrap();
-    }
+	if args.emit_ir {
+		let mut file = std::fs::File::create("ir.cgemir").unwrap();
+		file.write_all(irprint.as_bytes()).unwrap();
+	}
 }
 
 #[derive(Parser)]
@@ -66,9 +66,9 @@ struct Args
 	#[clap(long="no-main", value_name="Emit entry point", action=ArgAction::Set, default_value="false")]
 	no_main: bool,
 
-    #[clap(long="target", value_name="Target architecture to compile to", action=ArgAction::Set, default_value="urcl")]
-    target: String,
+	#[clap(long="target", value_name="Target architecture to compile to", action=ArgAction::Set, default_value="urcl")]
+	target: String,
 
-    #[clap(long="emit-ir", value_name="Emit codegem IR", action=ArgAction::Set, default_value="false")]
-    emit_ir: bool
+	#[clap(long="emit-ir", value_name="Emit codegem IR", action=ArgAction::Set, default_value="false")]
+	emit_ir: bool
 }

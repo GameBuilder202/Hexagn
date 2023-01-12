@@ -3,4 +3,6 @@
 /Hexagn-rust.iml
 
 /test.hxgn
-/out.urcl
+/hexagn.urcl
+/hexagn.s
+/ir.cgemir
