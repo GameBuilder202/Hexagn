@@ -1,6 +1,6 @@
 use std::{fs::File, io::Read};
 
-use super::ast::{nodes::Program, make_ast};
+use super::ast::{make_ast, nodes::Program};
 use super::lexer::tokenize;
 use crate::unwrap_or_err;
 

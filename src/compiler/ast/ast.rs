@@ -44,6 +44,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                 );
 
                 match op.tok_type {
+                    // Variable definition
                     TokenType::Assign => {
                         if current.tok_type == TokenType::Void {
                             print_error(
@@ -79,6 +80,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         })
                     }
 
+                    // Variable declaration
                     TokenType::Semicolon => {
                         prog.statements.push(Node::VarDefineNode {
                             typ: var_type,
@@ -88,6 +90,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         buf.advance()
                     }
 
+                    // Function definition
                     TokenType::OpenParen => {
                         let mut args = vec![];
                         if !buf.in_bounds()
@@ -130,7 +133,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                             }
                             if curr.tok_type != TokenType::Semicolon {
                                 print_error(
-                                    "Expectee ')' or ',' after identifier",
+                                    "Expected ')' or ',' after identifier",
                                     src,
                                     curr.start,
                                     curr.end,
@@ -142,35 +145,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         }
 
                         buf.advance();
-                        buf_consume!(
-                            buf,
-                            (TokenType::OpenBrace),
-                            src,
-                            "Expected '{' for function body"
-                        );
-
-                        let mut body = vec![];
-                        let mut scope = 0;
-                        while buf.in_bounds() {
-                            let curr = buf.current("").clone();
-                            if curr.tok_type == TokenType::OpenBrace {
-                                scope += 1
-                            } else if curr.tok_type == TokenType::CloseBrace {
-                                if scope == 0 {
-                                    break;
-                                }
-                                scope -= 1;
-                            }
-                            body.push(curr);
-                            buf.advance()
-                        }
-                        buf_consume!(
-                            buf,
-                            (TokenType::CloseBrace),
-                            src,
-                            "Expected closing '}' for function body"
-                        );
-                        let func_body = make_ast(src, &body);
+                        let func_body = sub_program(&mut buf, src, "function body");
                         prog.statements.push(Node::FunctionNode {
                             ret_type: var_type,
                             name: ident.val,
@@ -185,10 +160,23 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                 }
             }
 
+            TokenType::If => {
+                buf.advance();
+                buf_consume!(buf, (TokenType::OpenParen), src, "Expected '(' after if");
+                let expr = expr_parser(&mut buf, src);
+                buf_consume!(
+                    buf,
+                    (TokenType::CloseParen),
+                    src,
+                    "Expected ')' after if expression"
+                );
+                let body = sub_program(&mut buf, src, "if statement");
+                prog.statements.push(Node::IfNode { cond: expr, body })
+            }
+
             TokenType::Semicolon => {}
 
-            tok => {
-                println!("{:#?}", tok);
+            _ => {
                 print_error(
                     "Unexpected token",
                     src,
@@ -247,18 +235,18 @@ impl TokenBuffer {
 
 #[macro_export]
 macro_rules! buf_consume {
-	($buf:ident, ($($p:pat),+), $src:ident, $err:expr) => {
-		{
-			let curr = $buf.current($err).clone();
-			match curr.tok_type {
-				$($p)|+ => { $buf.advance(); curr },
-				_ => {
-					print_error($err, $src, curr.start, curr.end, curr.lineno);
-					exit(2)
-				}
-			}
-		}
-	};
+    ($buf:ident, ($($p:pat),+), $src:ident, $err:expr) => {
+        {
+            let curr = $buf.current($err).clone();
+            match curr.tok_type {
+                $($p)|+ => { $buf.advance(); curr },
+                _ => {
+                    print_error($err, $src, curr.start, curr.end, curr.lineno);
+                    exit(2)
+                }
+            }
+        }
+    };
 }
 
 fn make_type(buf: &mut TokenBuffer) -> HType {
@@ -368,4 +356,36 @@ fn is_datatype(tok: &Token) -> bool {
         || tok.tok_type == TokenType::Float
         || tok.tok_type == TokenType::String
         || tok.tok_type == TokenType::Character
+}
+
+fn sub_program(buf: &mut TokenBuffer, src: &String, err: &str) -> Program {
+    buf_consume!(
+        buf,
+        (TokenType::OpenBrace),
+        src,
+        format!("Expected '{{' for {}", err).as_str()
+    );
+    let mut body = vec![];
+    let mut scope = 0;
+    while buf.in_bounds() {
+        let curr = buf.current("").clone();
+        if curr.tok_type == TokenType::OpenBrace {
+            scope += 1
+        } else if curr.tok_type == TokenType::CloseBrace {
+            if scope == 0 {
+                break;
+            }
+            scope -= 1;
+        }
+        body.push(curr);
+        buf.advance()
+    }
+    buf_consume!(
+        buf,
+        (TokenType::CloseBrace),
+        src,
+        format!("Expected '}}' for {}", err).as_str()
+    );
+
+    make_ast(src, &body)
 }
