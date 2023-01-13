@@ -26,7 +26,7 @@ pub fn compile_ast(
                         &make_mangled_name(&name, &ret_type, &args),
                         &(hexagn_to_ir_fargs(args)
                             .iter()
-                            .map(|(s, v)| (s.as_str(), *v))
+                            .map(|(s, v)| (s.as_str(), v.clone()))
                             .collect::<Vec<(&str, Type)>>()),
                         &ret_type.to_ir_type(),
                     ),
@@ -117,6 +117,7 @@ fn compile_expr(
                 variables,
                 typ.clone(),
             );
+            use super::nodes::Operation::*;
             match op {
                 Add => builder
                     .push_instruction(&typ, Operation::Add(lhs_val, rhs_val))

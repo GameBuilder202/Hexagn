@@ -1,16 +1,8 @@
-use std::collections::HashMap;
 use std::{fs::File, io::Read};
 
-use codegem::ir::{
-    FunctionId, ModuleBuilder, Operation, Terminator, ToIntegerOperation, Type, Value, VariableId,
-};
-
-use super::ast::nodes::Comparison;
-use super::ast::nodes::{Expr, HType, Program};
-use super::ast::{nodes::Node, *};
+use super::ast::{nodes::Program, make_ast};
 use super::lexer::tokenize;
 use crate::unwrap_or_err;
-use nodes::Operation::*;
 
 pub struct Args {
     pub input_file: String,
