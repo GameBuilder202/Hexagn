@@ -66,6 +66,9 @@ pub enum TokenType {
     URCLBlock,
 
     Return,
+
+    Extern,
+    Pub
 }
 
 const SIGNED_INT_TYPES: [&str; 4] = ["int8", "int16", "int32", "int64"];
@@ -580,6 +583,17 @@ pub fn tokenize(src: &String) -> Vec<Token> {
                     start,
                     end,
                 })
+            } else if word == "extern" {
+                res.push(Token {
+                    lineno,
+                    tok_type: TokenType::Extern,
+                    val: word,
+
+                    start,
+                    end
+                })
+            } else if word == "pub" {
+                res.push(Token { lineno: lineno, tok_type: TokenType::Pub, val: word, start, end })
             } else {
                 res.push(Token {
                     lineno,

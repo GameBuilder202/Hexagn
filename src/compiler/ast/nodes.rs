@@ -2,7 +2,7 @@
 
 use std::fmt::Display;
 
-use codegem::ir::Type;
+use codegem::ir::{Type, Linkage};
 #[derive(Debug)]
 pub struct Program {
     pub statements: Vec<Node>,
@@ -29,6 +29,7 @@ pub enum Node {
         name: String,
         args: Vec<(HType, String)>,
         body: Program,
+        linkage: Linkage
     },
     FuncCallNode {
         name: String,
@@ -44,9 +45,14 @@ pub enum Node {
     },
     ImportNode(String),
     URCLBlockNode(String),
+    ExternNode {
+        name: String,
+        args: Vec<(HType, String)>,
+        ret_type: HType
+    }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum HType {
     Named(String),
     Ptr(Box<HType>),
@@ -64,6 +70,8 @@ impl HType {
                 "uint32" => Type::Integer(false, 32),
                 "uint16" => Type::Integer(false, 16),
                 "uint8" => Type::Integer(false, 8),
+                "char" => Type::Integer(false, 8),
+                "void" => Type::Void,
                 _ => todo!("Unimplimented type."),
             },
             _ => todo!("Unimplimented type."),

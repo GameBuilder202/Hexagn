@@ -1,5 +1,7 @@
 use std::process::exit;
 
+use codegem::ir::Linkage;
+
 use super::nodes::*;
 use crate::{
     buf_consume,
@@ -23,7 +25,15 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
             | TokenType::Uint
             | TokenType::Float
             | TokenType::String
-            | TokenType::Char => {
+            | TokenType::Char
+            | TokenType::Pub => {
+                let linkage;
+                if buf.current("").tok_type == TokenType::Pub {
+                    linkage = Linkage::Public;
+                    buf.advance();
+                } else {
+                    linkage = Linkage::Private;
+                }
                 // Making the type
                 let var_type = make_type(&mut buf);
                 let ident = buf_consume!(
@@ -148,9 +158,12 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         let func_body = sub_program(&mut buf, src, "function body");
                         prog.statements.push(Node::FunctionNode {
                             ret_type: var_type,
+                            
                             name: ident.val,
                             args,
                             body: func_body,
+
+                            linkage
                         })
                     }
 
@@ -162,6 +175,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
 
             TokenType::If => {
                 buf.advance();
+
                 buf_consume!(buf, (TokenType::OpenParen), src, "Expected '(' after if");
                 let expr = expr_parser(&mut buf, src);
                 buf_consume!(
@@ -174,7 +188,70 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                 prog.statements.push(Node::IfNode { cond: expr, body })
             }
 
-            TokenType::Semicolon => {}
+            TokenType::Extern => {
+                buf.advance();
+                let ret_type = make_type(&mut buf);
+                let name = buf.current("").val.clone();
+                let op = buf.next("").clone();
+                buf_consume!(buf, (TokenType::OpenParen), src, "Expected ( after extern name");
+
+                let mut args = vec![];
+                if !buf.in_bounds()
+                    || !(is_datatype(buf.current(""))
+                        || buf.current("").tok_type == TokenType::CloseParen)
+                {
+                    print_error(
+                        "Expected type or '(' after ')'",
+                        src,
+                        op.start,
+                        op.end,
+                        op.lineno,
+                    );
+                    exit(2)
+                }
+
+                while buf.in_bounds() && buf.current("").tok_type != TokenType::CloseParen {
+                    let arg_type = make_type(&mut buf);
+                    let arg_ident = buf_consume!(
+                        buf,
+                        (TokenType::Identifier),
+                        src,
+                        "Expected identifier after type"
+                    );
+                    args.push((arg_type, arg_ident.val));
+
+                    if !buf.in_bounds() {
+                        print_error(
+                            "Expected ')' or ',' after identifier",
+                            src,
+                            arg_ident.start,
+                            arg_ident.end,
+                            arg_ident.lineno,
+                        );
+                        exit(2)
+                    }
+                    let curr = buf.current("");
+                    if curr.tok_type == TokenType::CloseParen {
+                        break;
+                    }
+                    if curr.tok_type != TokenType::Semicolon {
+                        print_error(
+                            "Expected ')' or ',' after identifier",
+                            src,
+                            curr.start,
+                            curr.end,
+                            curr.lineno,
+                        );
+                        exit(2)
+                    }
+                    buf.advance()
+                }
+
+                buf.advance();
+                prog.statements.push(Node::ExternNode { name, args, ret_type })
+            }
+
+            TokenType::Semicolon => { buf.advance(); }
 
             _ => {
                 print_error(

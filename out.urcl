@@ -1,18 +1,8 @@
 minreg 8
 bits 64
-._Hx4mainint8
+.putchar
+
+.main
 .L0
-    imm r6 69
-    imm r7 420
-    add r8 r6 r7
-    add r5 r8 r0
-    imm r6 5
-    add r7 r5 r6
-    add r7 r8 r0
-    bne .L1 r7 r0
-    jmp .L2
-.L1
-    imm r8 0
-.L2
     ret
 
