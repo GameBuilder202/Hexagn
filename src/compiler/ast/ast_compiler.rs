@@ -52,7 +52,7 @@ pub fn compile_ast(
                         .unwrap(),
                 );
                 builder
-                    .push_instruction(&typ.to_ir_type(), Operation::SetVar(variables[&ident], val));
+                    .push_instruction(Operation::SetVar(variables[&ident], val));
             }
             Node::VarAssignNode { ident, expr } => {
                 let val = compile_expr(
@@ -63,7 +63,6 @@ pub fn compile_ast(
                     Type::Integer(false, 64),
                 );
                 builder.push_instruction(
-                    &Type::Integer(false, 64),
                     Operation::SetVar(variables[&ident], val),
                 );
             }
@@ -100,7 +99,7 @@ fn compile_expr(
     }
     match expr.unwrap() {
         Expr::Number(n) => builder
-            .push_instruction(&typ, n.to_integer_operation())
+            .push_instruction(n.to_integer_operation())
             .unwrap(),
         Expr::BiOp { lhs, op, rhs } => {
             let lhs_val = compile_expr(
@@ -120,24 +119,24 @@ fn compile_expr(
             use super::nodes::Operation::*;
             match op {
                 Add => builder
-                    .push_instruction(&typ, Operation::Add(lhs_val, rhs_val))
+                    .push_instruction( Operation::Add(lhs_val, rhs_val))
                     .unwrap(),
                 Sub => builder
-                    .push_instruction(&typ, Operation::Sub(lhs_val, rhs_val))
+                    .push_instruction(Operation::Sub(lhs_val, rhs_val))
                     .unwrap(),
                 Mult => builder
-                    .push_instruction(&typ, Operation::Mul(lhs_val, rhs_val))
+                    .push_instruction(Operation::Mul(lhs_val, rhs_val))
                     .unwrap(),
                 Div => builder
-                    .push_instruction(&typ, Operation::Div(lhs_val, rhs_val))
+                    .push_instruction(Operation::Div(lhs_val, rhs_val))
                     .unwrap(),
                 Mod => builder
-                    .push_instruction(&typ, Operation::Mod(lhs_val, rhs_val))
+                    .push_instruction(Operation::Mod(lhs_val, rhs_val))
                     .unwrap(),
             }
         }
         Expr::Ident(n) => builder
-            .push_instruction(&typ, Operation::GetVar(variables[&n]))
+            .push_instruction(Operation::GetVar(variables[&n]))
             .unwrap(),
         Expr::Comp { lhs, comp, rhs } => {
             let lhs_val = compile_expr(
@@ -156,22 +155,22 @@ fn compile_expr(
             );
             match comp {
                 Comparison::EQ => builder
-                    .push_instruction(&typ, Operation::Eq(lhs_val, rhs_val))
+                    .push_instruction(Operation::Eq(lhs_val, rhs_val))
                     .unwrap(),
                 Comparison::NEQ => builder
-                    .push_instruction(&typ, Operation::Ne(lhs_val, rhs_val))
+                    .push_instruction(Operation::Ne(lhs_val, rhs_val))
                     .unwrap(),
                 Comparison::LT => builder
-                    .push_instruction(&typ, Operation::Lt(lhs_val, rhs_val))
+                    .push_instruction(Operation::Lt(lhs_val, rhs_val))
                     .unwrap(),
                 Comparison::LTE => builder
-                    .push_instruction(&typ, Operation::Le(lhs_val, rhs_val))
+                    .push_instruction(Operation::Le(lhs_val, rhs_val))
                     .unwrap(),
                 Comparison::GT => builder
-                    .push_instruction(&typ, Operation::Gt(lhs_val, rhs_val))
+                    .push_instruction(Operation::Gt(lhs_val, rhs_val))
                     .unwrap(),
                 Comparison::GTE => builder
-                    .push_instruction(&typ, Operation::Ge(lhs_val, rhs_val))
+                    .push_instruction(Operation::Ge(lhs_val, rhs_val))
                     .unwrap(),
             }
         }

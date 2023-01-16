@@ -35,17 +35,17 @@ fn main() {
         "urcl" => {
             let mut vcode = ir.lower_to_vcode::<_, UrclSelector>();
             vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
+            vcode.emit_assembly(&mut std::fs::File::create("out.urcl").unwrap()).unwrap();
         }
         "rv64" | "riscv" => {
             let mut vcode = ir.lower_to_vcode::<_, RvSelector>();
             vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
+            vcode.emit_assembly(&mut std::fs::File::create("out.s").unwrap()).unwrap();
         }
         "x86_64" | "x86" | "x64" => {
             let mut vcode = ir.lower_to_vcode::<_, X64Selector>();
             vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
+            vcode.emit_assembly(&mut std::fs::File::create("out.s").unwrap()).unwrap();
         }
         _ => panic!("Unknown backend"),
     }

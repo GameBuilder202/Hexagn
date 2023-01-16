@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.0.18", features = ["derive"] }
-codegem = "0.1.2"
+codegem = "0.2.0"
