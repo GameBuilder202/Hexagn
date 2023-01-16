@@ -10,6 +10,7 @@ main:
     push %r14
     push %r15
 .main.L0:
+    call putchar
     pop %r15
     pop %r14
     pop %r13

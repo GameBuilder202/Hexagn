@@ -81,10 +81,10 @@ pub fn compile_ast(
                 );
                 let if_block = builder.push_block().unwrap();
                 let if_end = builder.push_block().unwrap();
-                //builder.set_terminator(Terminator::Branch(cond_val, if_block, if_end));
+                builder.set_terminator(Terminator::Branch(cond_val, if_block, if_end));
                 builder.switch_to_block(if_block);
                 compile_ast(body, builder, functions, variables);
-                builder.set_terminator(Terminator::Jump(if_end));
+                //builder.set_terminator(Terminator::Jump(if_end));
                 builder.switch_to_block(if_end);
             }
             _ => todo!("Unimplimented AST node"),
