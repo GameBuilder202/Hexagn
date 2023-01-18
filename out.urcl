@@ -4,5 +4,12 @@ bits 64
 
 .main
 .L0
-    ret
+    imm r8 1
+    bne .L1 r8 r0
+    jmp .L2
+.L1
+    imm r8 69
+.L2
+    imm r8 0
+    hlt
 

@@ -29,7 +29,7 @@ fn main() {
     let mut functions = HashMap::new();
     let mut variables = HashMap::new();
     compiler::ast::ast_compiler::compile_ast(prog, &mut builder, &mut functions, &mut variables);
-    let ir = builder.build();
+    let ir = builder.build().unwrap();
     let irprint = ir.to_string();
     match args.target.to_lowercase().as_str() {
         "urcl" => {

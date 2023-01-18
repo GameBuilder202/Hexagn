@@ -34,7 +34,8 @@ pub fn compile_ast(
                 let b = builder.push_block().unwrap();
                 builder.switch_to_block(b);
                 compile_ast(body, builder, functions, variables);
-                builder.set_terminator(Terminator::ReturnVoid);
+                let val = builder.push_instruction(0.to_integer_operation()).unwrap().unwrap();
+                builder.set_terminator(Terminator::Return(val)).unwrap();
             }
             Node::ExternNode { name, args, ret_type } => {
                 functions.insert(name.clone(), builder.new_function(name.as_str(), Linkage::External, &(hexagn_to_ir_fargs(args)), &ret_type.to_ir_type()));
@@ -53,7 +54,7 @@ pub fn compile_ast(
                         .unwrap(),
                 );
                 builder
-                    .push_instruction(Operation::SetVar(variables[&ident], val));
+                    .push_instruction(Operation::SetVar(variables[&ident], val)).unwrap();
             }
             Node::VarAssignNode { ident, expr } => {
                 let val = compile_expr(
@@ -64,7 +65,7 @@ pub fn compile_ast(
                 );
                 builder.push_instruction(
                     Operation::SetVar(variables[&ident], val),
-                );
+                ).unwrap();
             }
             Node::IfNode { cond, body } => {
                 let cond_val = compile_expr(
@@ -75,7 +76,7 @@ pub fn compile_ast(
                 );
                 let if_block = builder.push_block().unwrap();
                 let if_end = builder.push_block().unwrap();
-                builder.set_terminator(Terminator::Branch(cond_val, if_block, if_end));
+                builder.set_terminator(Terminator::Branch(cond_val, if_block, if_end)).unwrap();
                 builder.switch_to_block(if_block);
                 compile_ast(body, builder, functions, variables);
                 //builder.set_terminator(Terminator::Jump(if_end));
