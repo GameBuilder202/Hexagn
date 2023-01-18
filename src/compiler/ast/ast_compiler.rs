@@ -26,10 +26,7 @@ pub fn compile_ast(
                     builder.new_function(
                         &make_mangled_name(&name, &ret_type, &args),
                         linkage,
-                        &(hexagn_to_ir_fargs(args)
-                            .iter()
-                            .map(|(s, v)| (s.as_str(), v.clone()))
-                            .collect::<Vec<(&str, Type)>>()),
+                        &(hexagn_to_ir_fargs(args)),
                         &ret_type.to_ir_type(),
                     ),
                 );
@@ -40,10 +37,7 @@ pub fn compile_ast(
                 builder.set_terminator(Terminator::ReturnVoid);
             }
             Node::ExternNode { name, args, ret_type } => {
-                functions.insert(name.clone(), builder.new_function(name.as_str(), Linkage::External, &(hexagn_to_ir_fargs(args)
-                .iter()
-                .map(|(s, v)| (s.as_str(), v.clone()))
-                .collect::<Vec<(&str, Type)>>()), &ret_type.to_ir_type()));
+                functions.insert(name.clone(), builder.new_function(name.as_str(), Linkage::External, &(hexagn_to_ir_fargs(args)), &ret_type.to_ir_type()));
             }
             Node::VarDefineNode { typ, ident, expr } => {
                 let val = compile_expr(
@@ -101,7 +95,7 @@ fn compile_expr(
     match expr.unwrap() {
         Expr::Number(n) => builder
             .push_instruction(n.to_integer_operation())
-            .unwrap(),
+            .unwrap().unwrap(),
         Expr::BiOp { lhs, op, rhs } => {
             let lhs_val = compile_expr(
                 Some((*lhs).clone()),
@@ -119,24 +113,24 @@ fn compile_expr(
             match op {
                 Add => builder
                     .push_instruction( Operation::Add(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Sub => builder
                     .push_instruction(Operation::Sub(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Mult => builder
                     .push_instruction(Operation::Mul(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Div => builder
                     .push_instruction(Operation::Div(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Mod => builder
                     .push_instruction(Operation::Mod(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
             }
         }
         Expr::Ident(n) => builder
             .push_instruction(Operation::GetVar(variables[&n]))
-            .unwrap(),
+            .unwrap().unwrap(),
         Expr::Comp { lhs, comp, rhs } => {
             let lhs_val = compile_expr(
                 Some((*lhs).clone()),
@@ -153,22 +147,22 @@ fn compile_expr(
             match comp {
                 Comparison::EQ => builder
                     .push_instruction(Operation::Eq(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Comparison::NEQ => builder
                     .push_instruction(Operation::Ne(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Comparison::LT => builder
                     .push_instruction(Operation::Lt(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Comparison::LTE => builder
                     .push_instruction(Operation::Le(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Comparison::GT => builder
                     .push_instruction(Operation::Gt(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
                 Comparison::GTE => builder
                     .push_instruction(Operation::Ge(lhs_val, rhs_val))
-                    .unwrap(),
+                    .unwrap().unwrap(),
             }
         }
         _ => todo!(),
