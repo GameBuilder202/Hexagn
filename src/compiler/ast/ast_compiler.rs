@@ -34,8 +34,6 @@ pub fn compile_ast(
                 let b = builder.push_block().unwrap();
                 builder.switch_to_block(b);
                 compile_ast(body, builder, functions, variables);
-                let val = builder.push_instruction(0.to_integer_operation()).unwrap().unwrap();
-                builder.set_terminator(Terminator::Return(val)).unwrap();
             }
             Node::ExternNode { name, args, ret_type } => {
                 functions.insert(name.clone(), builder.new_function(name.as_str(), Linkage::External, &(hexagn_to_ir_fargs(args)), &ret_type.to_ir_type()));
@@ -81,6 +79,14 @@ pub fn compile_ast(
                 compile_ast(body, builder, functions, variables);
                 //builder.set_terminator(Terminator::Jump(if_end));
                 builder.switch_to_block(if_end);
+            }
+            Node::ReturnNode { expr } => {
+                let val = compile_expr(Some(expr), builder, functions, variables);
+                builder.set_terminator(Terminator::Return(val)).unwrap();
+            }
+            Node::FuncCallNode { name, args } => {
+                let args: Vec<Value> = args.into_iter().map(|a| compile_expr(Some(a), builder, functions, variables)).collect();
+                builder.push_instruction(Operation::Call(functions[&name], args)).unwrap();
             }
             _ => todo!("Unimplimented AST node"),
         }

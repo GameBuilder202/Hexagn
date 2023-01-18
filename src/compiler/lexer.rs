@@ -68,7 +68,7 @@ pub enum TokenType {
     Return,
 
     Extern,
-    Pub
+    Pub,
 }
 
 const SIGNED_INT_TYPES: [&str; 4] = ["int8", "int16", "int32", "int64"];
@@ -375,8 +375,8 @@ pub fn tokenize(src: &String) -> Vec<Token> {
 
             res.push(Token {
                 lineno,
-                tok_type: TokenType::Char,
-                val: _char.to_string(),
+                tok_type: TokenType::Num,
+                val: (_char as u8).to_string(),
 
                 start,
                 end: buf.line_pos(&lineno),
@@ -594,6 +594,8 @@ pub fn tokenize(src: &String) -> Vec<Token> {
                 })
             } else if word == "pub" {
                 res.push(Token { lineno: lineno, tok_type: TokenType::Pub, val: word, start, end })
+            } else if word == "return" {
+                res.push(Token { lineno, tok_type: TokenType::Return, val: word, start, end })
             } else {
                 res.push(Token {
                     lineno,

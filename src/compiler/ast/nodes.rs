@@ -33,7 +33,7 @@ pub enum Node {
     },
     FuncCallNode {
         name: String,
-        args: Vec<Node>,
+        args: Vec<Expr>,
     },
     WhileNode {
         cond: Expr,
@@ -49,6 +49,9 @@ pub enum Node {
         name: String,
         args: Vec<(HType, String)>,
         ret_type: HType
+    },
+    ReturnNode {
+        expr: Expr
     }
 }
 

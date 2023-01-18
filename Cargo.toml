@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 clap = { version = "4.0.18", features = ["derive"] }
-codegem = { git = "https://github.com/code-gem/codegem" }
+codegem = { path = "../codegem" }

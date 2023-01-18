@@ -253,6 +253,31 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
 
             TokenType::Semicolon => { buf.advance(); }
 
+            TokenType::Return => {
+                buf.advance();
+                let expr = expr_parser(&mut buf, src);
+                prog.statements.push(Node::ReturnNode { expr });
+            }
+
+            TokenType::Identifier => {
+                let ident = buf.current("").clone();
+                buf.advance();
+                let op = buf_consume!(buf, (TokenType::Assign, TokenType::OpenParen), src, "Unexpected identifier.");
+                //buf.advance();
+                match op.tok_type {
+                    TokenType::Assign => {
+                        let expr = expr_parser(&mut buf, src);
+                        prog.statements.push(Node::VarAssignNode { ident: ident.val.clone(), expr: expr })
+                    },
+                    TokenType::OpenParen => {
+                        let args = make_function_args(&mut buf, src);
+                        prog.statements.push(Node::FuncCallNode { name: ident.val.clone(), args: args });
+                        buf.advance();
+                    },
+                    _ => unreachable!()
+                }
+            }
+
             _ => {
                 print_error(
                     "Unexpected token",
@@ -267,6 +292,15 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
     }
 
     prog
+}
+
+fn make_function_args(buf: &mut TokenBuffer, src: &String) -> Vec<Expr> {
+    let mut to_ret = Vec::new();
+    while buf.current("").tok_type != TokenType::CloseParen {
+        if buf.current("").tok_type == TokenType::Comma { buf.advance() }
+        to_ret.push(expr_parser(buf, src));
+    }
+    to_ret
 }
 
 struct TokenBuffer {
