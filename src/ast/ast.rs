@@ -1,14 +1,11 @@
 use std::process::exit;
 
-use codegem::ir::Linkage;
-
 use super::nodes::*;
+
+use crate::lexer::{Token, TokenType};
 use crate::{
     buf_consume,
-    compiler::{
-        lexer::{Token, TokenType},
-        print_error,
-    },
+    util::print_error,
     unwrap_or_err,
 };
 

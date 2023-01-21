@@ -2,7 +2,13 @@
 
 use std::fmt::Display;
 
-use codegem::ir::{Type, Linkage};
+#[derive(Debug, Clone, Copy)]
+pub enum Linkage {
+    Public,
+    Private,
+    External
+}
+
 #[derive(Debug)]
 pub struct Program {
     pub statements: Vec<Node>,
@@ -61,25 +67,6 @@ pub enum HType {
     Ptr(Box<HType>),
     Arr(Box<HType>),
     Const(Box<HType>),
-}
-
-impl HType {
-    pub fn to_ir_type(self) -> Type {
-        match self {
-            HType::Named(n) => match n.as_str() {
-                "int32" => Type::Integer(true, 32),
-                "int16" => Type::Integer(true, 16),
-                "int8" => Type::Integer(true, 8),
-                "uint32" => Type::Integer(false, 32),
-                "uint16" => Type::Integer(false, 16),
-                "uint8" => Type::Integer(false, 8),
-                "char" => Type::Integer(false, 8),
-                "void" => Type::Void,
-                _ => todo!("Unimplimented type."),
-            },
-            _ => todo!("Unimplimented type."),
-        }
-    }
 }
 
 impl Display for HType {

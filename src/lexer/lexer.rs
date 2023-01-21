@@ -1,6 +1,6 @@
 use std::process::exit;
 
-use crate::compiler::print_error;
+use crate::util::print_error;
 use crate::unwrap_or_err;
 use crate::util::find_nth;
 

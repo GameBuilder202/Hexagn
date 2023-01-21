@@ -1,0 +1,275 @@
+minreg 8
+bits 64
+.putchar
+
+._Hx17print_hello_worldvoid
+.L0
+    imm r7 72
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r7 r8 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r8 101
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r8 r6 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r8 108
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r7 r8 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r6 108
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r4 r5 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r7 111
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r3 r6 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r8 44
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r1 r7 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r4 32
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r2 r8 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r5 87
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r5 r4 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r3 111
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r3 r4 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r6 114
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r4 r6 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r1 108
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r4 r6 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r7 100
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r6 r7 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r2 33
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r6 r7 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r8 10
+    psh r1
+    psh r2
+    psh r3
+    psh r4
+    psh r5
+    psh r6
+    psh r7
+    psh r8
+    add r7 r8 r0
+    cal F0
+    pop r1
+    pop r2
+    pop r3
+    pop r4
+    pop r5
+    pop r6
+    pop r7
+    pop r8
+    imm r5 0
+    hlt
+
