@@ -1,5 +1,7 @@
 use std::process::exit;
 
+use inkwell::module::Linkage;
+
 use super::nodes::*;
 
 use crate::lexer::{Token, TokenType};
@@ -26,7 +28,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
             | TokenType::Pub => {
                 let linkage;
                 if buf.current("").tok_type == TokenType::Pub {
-                    linkage = Linkage::Public;
+                    linkage = Linkage::Common;
                     buf.advance();
                 } else {
                     linkage = Linkage::Private;

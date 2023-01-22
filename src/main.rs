@@ -3,7 +3,6 @@ use std::{collections::HashMap, io::Write};
 use clap::{ArgAction, Parser};
 
 mod compiler;
-use compiler::*;
 
 pub mod util;
 pub mod lexer;

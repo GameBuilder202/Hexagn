@@ -2,12 +2,8 @@
 
 use std::fmt::Display;
 
-#[derive(Debug, Clone, Copy)]
-pub enum Linkage {
-    Public,
-    Private,
-    External
-}
+use inkwell::{module::Linkage, types::{FunctionType, IntType}};
+
 
 #[derive(Debug)]
 pub struct Program {
@@ -76,6 +72,19 @@ impl Display for HType {
             HType::Ptr(s) => write!(f, "PTR_{}", *s),
             HType::Const(s) => write!(f, "CONST_{}", *s),
             HType::Arr(s) => write!(f, "ARR_{}", *s),
+        }
+    }
+}
+
+impl<'a> HType {
+    pub fn to_fn_type(self) -> FunctionType<'a> {
+        match self {
+            HType::Named(n) => {
+                match n {
+                    _ => todo!()
+                }
+            }
+            _ => todo!()
         }
     }
 }
