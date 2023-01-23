@@ -14,7 +14,7 @@ use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::{Linkage, Module};
 use inkwell::targets::{Target, InitializationConfig, TargetMachine, RelocMode, CodeModel, FileType};
-use inkwell::types::IntType;
+use inkwell::types::{IntType, BasicMetadataTypeEnum};
 use inkwell::values::{FunctionValue, PointerValue, IntValue};
 use inkwell::types::FunctionType;
 
@@ -24,7 +24,7 @@ pub struct Args {
     pub no_main: bool,
 }
 
-pub fn compiler(args: &Args) -> Program {
+pub fn compiler(args: &Args) {
     let mut src = String::new();
 
     let mut input_file = unwrap_or_err!(File::open(&args.input_file), "Unable to open input file");
@@ -43,7 +43,7 @@ pub fn compiler(args: &Args) -> Program {
     let prog = make_ast(&src, &toks);
     println!("{:#?}", prog);
 
-    prog
+    Codegen::compile(prog, std::path::Path::new("./out.o"), true);
 }
 
 
@@ -57,7 +57,7 @@ struct Codegen<'ctx> {
 }
 
 impl<'ctx> Codegen<'ctx> {
-    pub fn compile(ast: Program, output_path: &Path) {
+    pub fn compile(ast: Program, output_path: &Path, emit_ir: bool) {
         let context = Context::create();
         let module = context.create_module("hexagn");
         let mut codegen = Codegen {
@@ -68,7 +68,11 @@ impl<'ctx> Codegen<'ctx> {
             cur_fn: None,
             cur_vars: HashMap::new()
         };
-        // call smth like compile_ast()
+        codegen.compile_ast(ast);
+        codegen.write_object(output_path);
+        if emit_ir {
+            codegen.module.write_bitcode_to_path(std::path::Path::new("./out.bc"));
+        }
     }
 
     fn write_object(&self, path: &Path) {
@@ -98,9 +102,16 @@ impl<'ctx> Codegen<'ctx> {
         for statement in prog.statements {
             match statement {
                 Node::FunctionNode { ret_type, name, args, body, linkage } => {
-                    let ty = todo!();
-                    self.module.add_function(&name, ty, Some(linkage));
-                }
+                    let ty = self.hexagn_to_llvm_type(ret_type).fn_type(&self.args_to_metadata(&args), false);
+                    let func = self.module.add_function(&name, ty, Some(linkage));
+                    self.cur_fn = Some(func);
+                    let entry = self.context.append_basic_block(func, "entry");
+                    //self.builder.position_at_end(entry);
+                    //self.compile_ast(body);
+                },
+                //Node::VarDefineNode { typ, ident, expr } => {
+                //    
+                //}
                 _ => todo!()
             }
         }
@@ -152,6 +163,21 @@ impl<'ctx> Codegen<'ctx> {
             }
             _ => todo!()
         }
+    }
+
+    fn args_to_metadata(&self, args: &[(HType, String)]) -> Vec<BasicMetadataTypeEnum<'ctx>> {
+        let mut ret = Vec::new();
+        for (typ, _) in args {
+            match typ.clone() {
+                HType::Named(n) => {
+                    if n.contains("int") {
+                        ret.push(BasicMetadataTypeEnum::IntType(self.hexagn_to_llvm_type((*typ).clone())));
+                    }
+                }
+                _ => todo!()
+            }
+        }
+        ret
     }
 }
 
