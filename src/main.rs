@@ -1,5 +1,3 @@
-use std::{collections::HashMap, io::Write};
-
 use clap::{ArgAction, Parser};
 
 mod compiler;

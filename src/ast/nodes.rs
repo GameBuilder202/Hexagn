@@ -17,42 +17,42 @@ impl Program {
 
 #[derive(Debug)]
 pub enum Node {
-    VarDefineNode {
+    VarDefineNode { // TODO: Add compilation for this
         typ: HType,
         ident: String,
         expr: Option<Expr>,
     },
-    VarAssignNode {
+    VarAssignNode { // TODO: Add compilation
         ident: String,
         expr: Expr,
     },
-    FunctionNode {
+    FunctionNode { // DONE
         ret_type: HType,
         name: String,
         args: Vec<(HType, String)>,
         body: Program,
         linkage: Option<Linkage>
     },
-    FuncCallNode {
+    FuncCallNode { // DONE
         name: String,
         args: Vec<Expr>,
     },
-    WhileNode {
+    WhileNode { // TODO: add compilation and proper expr parsing
         cond: Expr,
         body: Program,
     },
-    IfNode {
+    IfNode { // TODO: add compilation and proper expr parsing for this
         cond: Expr,
         body: Program,
     },
-    ImportNode(String),
-    URCLBlockNode(String),
-    ExternNode {
+    ImportNode(String), // TODO
+    URCLBlockNode(String), // probably never gonna be added (LLVM doesnt support URCL)
+    ExternNode { // DONE
         name: String,
         args: Vec<(HType, String)>,
         ret_type: HType
     },
-    ReturnNode {
+    ReturnNode { // DONE
         expr: Expr
     }
 }

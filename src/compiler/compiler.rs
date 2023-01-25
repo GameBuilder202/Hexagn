@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::{fs::File, io::Read};
 
 use crate::ast::{make_ast, nodes::Program};
@@ -14,7 +15,7 @@ use inkwell::context::Context;
 use inkwell::module::{Linkage, Module};
 use inkwell::targets::{Target, InitializationConfig, TargetMachine, RelocMode, CodeModel, FileType};
 use inkwell::types::{IntType, BasicMetadataTypeEnum};
-use inkwell::values::{FunctionValue, IntValue, BasicMetadataValueEnum};
+use inkwell::values::{FunctionValue, IntValue, BasicMetadataValueEnum, PointerValue};
 
 pub struct Args {
     pub input_file: String,
@@ -51,6 +52,7 @@ struct Codegen<'ctx> {
     builder: Builder<'ctx>,
 
     cur_fn: Option<FunctionValue<'ctx>>,
+    vars: HashMap<String, PointerValue<'ctx>>
 }
 
 impl<'ctx> Codegen<'ctx> {
@@ -63,6 +65,7 @@ impl<'ctx> Codegen<'ctx> {
             builder: context.create_builder(),
 
             cur_fn: None,
+            vars: HashMap::new()
         };
         codegen.compile_ast(ast);
         codegen.module.print_to_stderr();
@@ -91,7 +94,7 @@ impl<'ctx> Codegen<'ctx> {
                 model
             )
             .unwrap();
-        
+        self.module.verify().unwrap(); 
         target_machine.write_to_file(&self.module, FileType::Object, path).unwrap(); // can be changed to asm here
     }
 
@@ -116,9 +119,15 @@ impl<'ctx> Codegen<'ctx> {
                     self.module.add_function(&name, typ, Some(Linkage::External));
                 },
                 Node::FuncCallNode { name, args } => {
-                    let func = self.module.get_function(&name).unwrap();
-                    self.builder.build_call(func, &self.args_to_value(args).as_slice(), &name);
-                }
+                    let func = self.module.get_function(&name).expect("Undefined function. note: functions must be defined before they are called.");
+                    self.builder.build_call(func, &self.args_to_value(args), &name);
+                },
+                Node::VarDefineNode { typ, ident, expr } => {
+                    let alloca = self.builder.build_alloca(self.hexagn_to_llvm_type(typ), "buildvar");
+                    self.vars.insert(ident, alloca);
+                    let val = self.compile_expr(expr.unwrap());
+                    self.builder.build_store(alloca, val);
+                },
                 _ => todo!()
             }
         }
@@ -149,6 +158,10 @@ impl<'ctx> Codegen<'ctx> {
             },
             Expr::Number(n) => {
                 self.context.i64_type().const_int(n as u64, false)
+            },
+            Expr::Ident(i) => {
+                let var = self.vars[&i];
+                self.builder.build_load(self.context.i64_type(), var, "loadvar").into_int_value()
             }
             _ => todo!()
         }
