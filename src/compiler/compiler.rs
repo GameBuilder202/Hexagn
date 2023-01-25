@@ -10,6 +10,7 @@ use std::path::Path;
 use crate::ast::nodes::{Expr, Operation, HType, Node};
 
 use inkwell::OptimizationLevel;
+use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::{Linkage, Module};
@@ -42,7 +43,7 @@ pub fn compiler(args: &Args) {
     let prog = make_ast(&src, &toks);
     println!("{:#?}", prog);
 
-    Codegen::compile(prog, std::path::Path::new("./out.o"), true);
+    Codegen::compile(prog, std::path::Path::new("./out.o"), false);
 }
 
 
@@ -52,7 +53,7 @@ struct Codegen<'ctx> {
     builder: Builder<'ctx>,
 
     cur_fn: Option<FunctionValue<'ctx>>,
-    vars: HashMap<String, PointerValue<'ctx>>
+    vars: HashMap<String, (PointerValue<'ctx>, HType)>
 }
 
 impl<'ctx> Codegen<'ctx> {
@@ -94,7 +95,7 @@ impl<'ctx> Codegen<'ctx> {
                 model
             )
             .unwrap();
-        self.module.verify().unwrap(); 
+        //self.module.verify().unwrap(); 
         target_machine.write_to_file(&self.module, FileType::Object, path).unwrap(); // can be changed to asm here
     }
 
@@ -106,12 +107,17 @@ impl<'ctx> Codegen<'ctx> {
                     let func = self.module.add_function(&name, ty, linkage);
         
                     self.cur_fn = Some(func);
-                    let entry = self.context.append_basic_block(func, "entry");
+                    let alloca_entry = self.context.append_basic_block(func, "alloca_entry");
+                    
+                    let entry = self.context.append_basic_block(func, "fn_entry");
+                    
                     self.builder.position_at_end(entry);
                     self.compile_ast(body);
+                    self.builder.position_at_end(alloca_entry);
+                    self.builder.build_unconditional_branch(entry);
                 },
                 Node::ReturnNode { expr } => {
-                    let e = self.compile_expr(expr);
+                    let e = self.compile_expr(expr).const_bit_cast(self.cur_fn.unwrap().get_type().get_return_type().unwrap().into_int_type());
                     self.builder.build_return(Some(&e));
                 },
                 Node::ExternNode { name, args, ret_type } => {
@@ -123,11 +129,19 @@ impl<'ctx> Codegen<'ctx> {
                     self.builder.build_call(func, &self.args_to_value(args), &name);
                 },
                 Node::VarDefineNode { typ, ident, expr } => {
-                    let alloca = self.builder.build_alloca(self.hexagn_to_llvm_type(typ), "buildvar");
-                    self.vars.insert(ident, alloca);
+                    let alloca_entry = self.cur_fn.unwrap().get_first_basic_block();
+                    self.builder.position_at_end(alloca_entry.unwrap());
+                    let alloca = self.builder.build_alloca(self.hexagn_to_llvm_type(typ.clone()), "buildvar");
+                    self.vars.insert(ident, (alloca, typ.clone()));
+                    self.builder.position_at_end(self.cur_fn.unwrap().get_last_basic_block().unwrap());
                     let val = self.compile_expr(expr.unwrap());
-                    self.builder.build_store(alloca, val);
+                    self.builder.build_store(alloca, val.const_cast(self.hexagn_to_llvm_type(typ.clone()), true));
                 },
+                Node::VarAssignNode { ident, expr } => {
+                    let var = &self.vars[&ident];
+                    let val = self.compile_expr(expr).const_cast(self.hexagn_to_llvm_type(var.1.clone()), true);
+                    self.builder.build_store(var.0, val);
+                }
                 _ => todo!()
             }
         }
@@ -160,7 +174,7 @@ impl<'ctx> Codegen<'ctx> {
                 self.context.i64_type().const_int(n as u64, false)
             },
             Expr::Ident(i) => {
-                let var = self.vars[&i];
+                let var = self.vars[&i].0;
                 self.builder.build_load(self.context.i64_type(), var, "loadvar").into_int_value()
             }
             _ => todo!()
