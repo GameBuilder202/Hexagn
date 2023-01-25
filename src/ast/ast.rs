@@ -26,12 +26,12 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
             | TokenType::String
             | TokenType::Char
             | TokenType::Pub => {
-                let linkage;
+                let linkage: Option<Linkage>;
                 if buf.current("").tok_type == TokenType::Pub {
-                    linkage = Linkage::Common;
+                    linkage = None;
                     buf.advance();
                 } else {
-                    linkage = Linkage::Private;
+                    linkage = Some(Linkage::Private);
                 }
                 // Making the type
                 let var_type = make_type(&mut buf);

@@ -2,7 +2,7 @@
 
 use std::fmt::Display;
 
-use inkwell::{module::Linkage, types::{FunctionType, IntType}};
+use inkwell::{module::Linkage, types::{FunctionType}};
 
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ pub enum Node {
         name: String,
         args: Vec<(HType, String)>,
         body: Program,
-        linkage: Linkage
+        linkage: Option<Linkage>
     },
     FuncCallNode {
         name: String,

@@ -15,7 +15,7 @@ fn main() {
         todo!()
     }
 
-    let prog = compiler::compiler(&compiler::Args {
+    compiler::compiler(&compiler::Args {
         input_file: args.input_file,
         output_file: args.output_file,
         no_main: args.no_main,

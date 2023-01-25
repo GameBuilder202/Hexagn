@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::{fs::File, io::Read};
 
 use crate::ast::{make_ast, nodes::Program};
@@ -15,8 +14,7 @@ use inkwell::context::Context;
 use inkwell::module::{Linkage, Module};
 use inkwell::targets::{Target, InitializationConfig, TargetMachine, RelocMode, CodeModel, FileType};
 use inkwell::types::{IntType, BasicMetadataTypeEnum};
-use inkwell::values::{FunctionValue, PointerValue, IntValue};
-use inkwell::types::FunctionType;
+use inkwell::values::{FunctionValue, IntValue, BasicMetadataValueEnum};
 
 pub struct Args {
     pub input_file: String,
@@ -53,7 +51,6 @@ struct Codegen<'ctx> {
     builder: Builder<'ctx>,
 
     cur_fn: Option<FunctionValue<'ctx>>,
-    cur_vars: HashMap<String, PointerValue<'ctx>>
 }
 
 impl<'ctx> Codegen<'ctx> {
@@ -66,9 +63,9 @@ impl<'ctx> Codegen<'ctx> {
             builder: context.create_builder(),
 
             cur_fn: None,
-            cur_vars: HashMap::new()
         };
         codegen.compile_ast(ast);
+        codegen.module.print_to_stderr();
         codegen.write_object(output_path);
         if emit_ir {
             codegen.module.write_bitcode_to_path(std::path::Path::new("./out.bc"));
@@ -103,21 +100,31 @@ impl<'ctx> Codegen<'ctx> {
             match statement {
                 Node::FunctionNode { ret_type, name, args, body, linkage } => {
                     let ty = self.hexagn_to_llvm_type(ret_type).fn_type(&self.args_to_metadata(&args), false);
-                    let func = self.module.add_function(&name, ty, Some(linkage));
+                    let func = self.module.add_function(&name, ty, linkage);
+        
                     self.cur_fn = Some(func);
                     let entry = self.context.append_basic_block(func, "entry");
-                    //self.builder.position_at_end(entry);
-                    //self.compile_ast(body);
+                    self.builder.position_at_end(entry);
+                    self.compile_ast(body);
                 },
-                //Node::VarDefineNode { typ, ident, expr } => {
-                //    
-                //}
+                Node::ReturnNode { expr } => {
+                    let e = self.compile_expr(expr);
+                    self.builder.build_return(Some(&e));
+                },
+                Node::ExternNode { name, args, ret_type } => {
+                    let typ = self.hexagn_to_llvm_type(ret_type).fn_type(&self.args_to_metadata(&args), false);
+                    self.module.add_function(&name, typ, Some(Linkage::External));
+                },
+                Node::FuncCallNode { name, args } => {
+                    let func = self.module.get_function(&name).unwrap();
+                    self.builder.build_call(func, &self.args_to_value(args).as_slice(), &name);
+                }
                 _ => todo!()
             }
         }
     }
 
-    fn compile_expr(&mut self, expr: Expr) -> IntValue<'ctx> {
+    fn compile_expr(&self, expr: Expr) -> IntValue<'ctx> {
         match expr {
             Expr::BiOp { lhs, op, rhs } => {
                 let lhsc = self.compile_expr(*lhs);
@@ -138,11 +145,7 @@ impl<'ctx> Codegen<'ctx> {
                     Operation::Mod => {
                         self.builder.build_int_signed_rem(lhsc, rhsc, "modbiop")
                     }
-                    _ => todo!()
                 }
-            },
-            Expr::Ident(s) => {
-                self.builder.build_load(self.cur_vars[&s], "load_var").into_int_value()
             },
             Expr::Number(n) => {
                 self.context.i64_type().const_int(n as u64, false)
@@ -158,6 +161,7 @@ impl<'ctx> Codegen<'ctx> {
                     "int8" => self.context.i8_type(),
                     "int16" => self.context.i16_type(),
                     "int32" => self.context.i32_type(),
+                    "void" => self.context.i8_type(),
                     _ => todo!()
                 }
             }
@@ -176,6 +180,15 @@ impl<'ctx> Codegen<'ctx> {
                 }
                 _ => todo!()
             }
+        }
+        ret
+    }
+    
+    fn args_to_value(&self, args: Vec<Expr>) -> Vec<BasicMetadataValueEnum> {
+        let mut ret = Vec::new();
+        for arg in args {
+            let val = self.compile_expr(arg);
+            ret.push(BasicMetadataValueEnum::IntValue(val));
         }
         ret
     }
