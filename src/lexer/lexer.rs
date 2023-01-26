@@ -15,7 +15,7 @@ pub struct Token {
 }
 
 #[allow(dead_code)]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TokenType {
     // Builtin datatypes
     Void,
@@ -165,7 +165,52 @@ pub fn tokenize(src: &String) -> Vec<Token> {
 
                 start: buf.line_pos(&lineno),
                 end: buf.line_pos(&lineno),
-            }) 
+            })
+        } else if data == '+' {
+            res.push(Token {
+                lineno,
+                tok_type: TokenType::Plus,
+                val: data.to_string(),
+
+                start: buf.line_pos(&lineno),
+                end: buf.line_pos(&lineno),
+            })
+        } else if data == '-' {
+            res.push(Token {
+                lineno,
+                tok_type: TokenType::Minus,
+                val: data.to_string(),
+
+                start: buf.line_pos(&lineno),
+                end: buf.line_pos(&lineno),
+            })
+        } else if data == '*' {
+            res.push(Token {
+                lineno,
+                tok_type: TokenType::Mult,
+                val: data.to_string(),
+
+                start: buf.line_pos(&lineno),
+                end: buf.line_pos(&lineno),
+            })
+        } else if data == '/' {
+            res.push(Token {
+                lineno,
+                tok_type: TokenType::Div,
+                val: data.to_string(),
+
+                start: buf.line_pos(&lineno),
+                end: buf.line_pos(&lineno),
+            })
+        } else if data == '(' {
+            res.push(Token {
+                lineno,
+                tok_type: TokenType::OpenParen,
+                val: data.to_string(),
+
+                start: buf.line_pos(&lineno),
+                end: buf.line_pos(&lineno),
+            })
         } else if data == ')' {
             res.push(Token {
                 lineno,
@@ -528,7 +573,16 @@ pub fn tokenize(src: &String) -> Vec<Token> {
 
                     start,
                     end,
-                }) 
+                })
+            } else if word == "return" {
+                res.push(Token {
+                    lineno,
+                    tok_type: TokenType::Return,
+                    val: word,
+
+                    start,
+                    end,
+                })
             } else if word == "extern" {
                 res.push(Token {
                     lineno,
@@ -539,7 +593,7 @@ pub fn tokenize(src: &String) -> Vec<Token> {
                     end
                 })
             } else if word == "pub" {
-                res.push(Token { lineno, tok_type: TokenType::Pub, val: word, start, end })
+                res.push(Token { lineno: lineno, tok_type: TokenType::Pub, val: word, start, end })
             } else if word == "return" {
                 res.push(Token { lineno, tok_type: TokenType::Return, val: word, start, end })
             } else {
@@ -595,9 +649,9 @@ struct Buffer {
 }
 
 impl Buffer {
-    pub fn new(src: &str) -> Buffer {
+    pub fn new(src: &String) -> Buffer {
         Buffer {
-            data: src.to_string(),
+            data: src.clone(),
             index: 0,
         }
     }
@@ -631,11 +685,21 @@ impl Buffer {
     }
 }
 
-#[derive(Default)]
 struct PosInfo {
     src: String,
     start: usize,
     end: usize,
     lineno: usize,
+}
+
+impl Default for PosInfo {
+    fn default() -> Self {
+        Self {
+            src: String::new(),
+            start: 0,
+            end: 0,
+            lineno: 0,
+        }
+    }
 }
 
