@@ -117,7 +117,7 @@ impl<'ctx> Codegen<'ctx> {
                     self.builder.build_unconditional_branch(entry);
                 },
                 Node::ReturnNode { expr } => {
-                    let e = self.compile_expr(expr).const_bit_cast(self.cur_fn.unwrap().get_type().get_return_type().unwrap().into_int_type());
+                    let e = self.compile_expr(expr).const_cast(self.cur_fn.unwrap().get_type().get_return_type().unwrap().into_int_type(), true);
                     self.builder.build_return(Some(&e));
                 },
                 Node::ExternNode { name, args, ret_type } => {
