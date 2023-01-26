@@ -10,7 +10,6 @@ use std::path::Path;
 use crate::ast::nodes::{Expr, Operation, HType, Node};
 
 use inkwell::OptimizationLevel;
-use inkwell::basic_block::BasicBlock;
 use inkwell::builder::Builder;
 use inkwell::context::Context;
 use inkwell::module::{Linkage, Module};
@@ -43,7 +42,7 @@ pub fn compiler(args: &Args) {
     let prog = make_ast(&src, &toks);
     println!("{:#?}", prog);
 
-    Codegen::compile(prog, std::path::Path::new("./out.o"), false);
+    Codegen::compile(prog, std::path::Path::new("./out.o"), true);
 }
 
 
@@ -53,11 +52,11 @@ struct Codegen<'ctx> {
     builder: Builder<'ctx>,
 
     cur_fn: Option<FunctionValue<'ctx>>,
-    vars: HashMap<String, (PointerValue<'ctx>, HType)>
 }
 
 impl<'ctx> Codegen<'ctx> {
     pub fn compile(ast: Program, output_path: &Path, emit_ir: bool) {
+        let vars: HashMap<String, (PointerValue<'ctx>, HType)> = HashMap::new();
         let context = Context::create();
         let module = context.create_module("hexagn");
         let mut codegen = Codegen {
@@ -66,9 +65,8 @@ impl<'ctx> Codegen<'ctx> {
             builder: context.create_builder(),
 
             cur_fn: None,
-            vars: HashMap::new()
         };
-        codegen.compile_ast(ast);
+        codegen.compile_ast(ast, &vars);
         codegen.module.print_to_stderr();
         codegen.write_object(output_path);
         if emit_ir {
@@ -99,7 +97,8 @@ impl<'ctx> Codegen<'ctx> {
         target_machine.write_to_file(&self.module, FileType::Object, path).unwrap(); // can be changed to asm here
     }
 
-    pub fn compile_ast(&mut self, prog: Program) {
+    pub fn compile_ast(&mut self, prog: Program, vars: &HashMap<String, (PointerValue<'ctx>, HType)>) {
+        let mut scope_vars = vars.clone();
         for statement in prog.statements {
             match statement {
                 Node::FunctionNode { ret_type, name, args, body, linkage } => {
@@ -112,12 +111,12 @@ impl<'ctx> Codegen<'ctx> {
                     let entry = self.context.append_basic_block(func, "fn_entry");
                     
                     self.builder.position_at_end(entry);
-                    self.compile_ast(body);
+                    self.compile_ast(body, vars);
                     self.builder.position_at_end(alloca_entry);
                     self.builder.build_unconditional_branch(entry);
                 },
                 Node::ReturnNode { expr } => {
-                    let e = self.compile_expr(expr).const_cast(self.cur_fn.unwrap().get_type().get_return_type().unwrap().into_int_type(), true);
+                    let e = self.compile_expr(expr, &scope_vars).const_cast(self.cur_fn.unwrap().get_type().get_return_type().unwrap().into_int_type(), true);
                     self.builder.build_return(Some(&e));
                 },
                 Node::ExternNode { name, args, ret_type } => {
@@ -126,20 +125,20 @@ impl<'ctx> Codegen<'ctx> {
                 },
                 Node::FuncCallNode { name, args } => {
                     let func = self.module.get_function(&name).expect("Undefined function. note: functions must be defined before they are called.");
-                    self.builder.build_call(func, &self.args_to_value(args), &name);
+                    self.builder.build_call(func, &self.args_to_value(args, &scope_vars), &name);
                 },
                 Node::VarDefineNode { typ, ident, expr } => {
                     let alloca_entry = self.cur_fn.unwrap().get_first_basic_block();
                     self.builder.position_at_end(alloca_entry.unwrap());
                     let alloca = self.builder.build_alloca(self.hexagn_to_llvm_type(typ.clone()), "buildvar");
-                    self.vars.insert(ident, (alloca, typ.clone()));
+                    scope_vars.insert(ident, (alloca, typ.clone()));
                     self.builder.position_at_end(self.cur_fn.unwrap().get_last_basic_block().unwrap());
-                    let val = self.compile_expr(expr.unwrap());
+                    let val = self.compile_expr(expr.unwrap(), &scope_vars);
                     self.builder.build_store(alloca, val.const_cast(self.hexagn_to_llvm_type(typ.clone()), true));
                 },
                 Node::VarAssignNode { ident, expr } => {
-                    let var = &self.vars[&ident];
-                    let val = self.compile_expr(expr).const_cast(self.hexagn_to_llvm_type(var.1.clone()), true);
+                    let var = &scope_vars[&ident];
+                    let val = self.compile_expr(expr, &scope_vars).const_cast(self.hexagn_to_llvm_type(var.1.clone()), true);
                     self.builder.build_store(var.0, val);
                 }
                 _ => todo!()
@@ -147,11 +146,11 @@ impl<'ctx> Codegen<'ctx> {
         }
     }
 
-    fn compile_expr(&self, expr: Expr) -> IntValue<'ctx> {
+    fn compile_expr(&self, expr: Expr, vars: &HashMap<String, (PointerValue<'ctx>, HType)>) -> IntValue<'ctx> {
         match expr {
             Expr::BiOp { lhs, op, rhs } => {
-                let lhsc = self.compile_expr(*lhs);
-                let rhsc = self.compile_expr(*rhs);
+                let lhsc = self.compile_expr(*lhs, vars);
+                let rhsc = self.compile_expr(*rhs, vars);
                 match op {
                     Operation::Add => {
                         self.builder.build_int_add(lhsc, rhsc, "addbiop")
@@ -174,7 +173,7 @@ impl<'ctx> Codegen<'ctx> {
                 self.context.i64_type().const_int(n as u64, false)
             },
             Expr::Ident(i) => {
-                let var = self.vars[&i].0;
+                let var = vars[&i].0;
                 self.builder.build_load(self.context.i64_type(), var, "loadvar").into_int_value()
             }
             _ => todo!()
@@ -211,10 +210,10 @@ impl<'ctx> Codegen<'ctx> {
         ret
     }
     
-    fn args_to_value(&self, args: Vec<Expr>) -> Vec<BasicMetadataValueEnum> {
+    fn args_to_value(&self, args: Vec<Expr>, vars: &HashMap<String, (PointerValue<'ctx>, HType)>) -> Vec<BasicMetadataValueEnum> {
         let mut ret = Vec::new();
         for arg in args {
-            let val = self.compile_expr(arg);
+            let val = self.compile_expr(arg, vars);
             ret.push(BasicMetadataValueEnum::IntValue(val));
         }
         ret
