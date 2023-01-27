@@ -1,17 +1,9 @@
-use std::{collections::HashMap, io::Write};
-
 use clap::{ArgAction, Parser};
 
 mod compiler;
 use compiler::*;
 
 pub mod util;
-
-use codegem::{
-    arch::{rv64::RvSelector, urcl::UrclSelector, x64::X64Selector},
-    ir::ModuleBuilder,
-    regalloc::RegAlloc,
-};
 
 fn main() {
     let args = Args::parse();
@@ -24,36 +16,6 @@ fn main() {
         output_file: args.output_file,
         no_main: args.no_main,
     });
-
-    let mut builder = ModuleBuilder::default().with_name("hexagn");
-    let mut functions = HashMap::new();
-    let mut variables = HashMap::new();
-    compiler::ast::ast_compiler::compile_ast(prog, &mut builder, &mut functions, &mut variables);
-    let ir = builder.build();
-    let irprint = ir.to_string();
-    match args.target.to_lowercase().as_str() {
-        "urcl" => {
-            let mut vcode = ir.lower_to_vcode::<_, UrclSelector>();
-            vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
-        }
-        "rv64" | "riscv" => {
-            let mut vcode = ir.lower_to_vcode::<_, RvSelector>();
-            vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
-        }
-        "x86_64" | "x86" | "x64" => {
-            let mut vcode = ir.lower_to_vcode::<_, X64Selector>();
-            vcode.allocate_regs::<RegAlloc>();
-            vcode.emit_assembly();
-        }
-        _ => panic!("Unknown backend"),
-    }
-
-    if args.emit_ir {
-        let mut file = std::fs::File::create("ir.cgemir").unwrap();
-        file.write_all(irprint.as_bytes()).unwrap();
-    }
 }
 
 #[derive(Parser)]
@@ -74,10 +36,4 @@ struct Args {
 
     #[clap(long="no-main", value_name="Emit entry point", action=ArgAction::Set, default_value="false")]
     no_main: bool,
-
-    #[clap(long="target", value_name="Target architecture to compile to", action=ArgAction::Set, default_value="urcl")]
-    target: String,
-
-    #[clap(long="emit-ir", value_name="Emit codegem IR", action=ArgAction::Set, default_value="false")]
-    emit_ir: bool,
 }
