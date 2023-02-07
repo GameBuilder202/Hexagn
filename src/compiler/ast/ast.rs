@@ -4,6 +4,7 @@ use super::nodes::*;
 use crate::{
     buf_consume,
     compiler::{
+        draw_arrows,
         lexer::{Token, TokenType},
         print_error,
     },
@@ -113,11 +114,35 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
             TokenType::While => {
                 buf.advance();
                 let expr = expr_parser(&mut buf, src);
-                let body = sub_program(&mut buf, src, "if statement");
+                let body = sub_program(&mut buf, src, "while statement");
                 prog.statements.push(Node::WhileNode { cond: expr, body })
             }
 
-            TokenType::Semicolon => {}
+            TokenType::Import => {
+                let mut lib_name = String::new();
+
+                buf.advance();
+                while buf.in_bounds() && buf.current("").tok_type != TokenType::Semicolon {
+                    lib_name += buf_consume!(buf, (TokenType::Identifier, TokenType::URCLBlock), src, "Expected module name").val.as_str();
+                    if buf.current("Expected '.' or ':' after module name").tok_type == TokenType::Semicolon {
+                        break;
+                    }
+                    lib_name += buf_consume!(buf, (TokenType::Dot, TokenType::Colon), src, "Expected '.' or ':' after module name").val.as_str();
+
+                    buf.advance()
+                }
+                buf.advance();
+                prog.statements.push(Node::ImportNode(lib_name))
+            }
+
+            TokenType::URCLBlock => {
+                buf.advance();
+                let urcl = buf_consume!(buf, (TokenType::Str), src, "Expected URCL code in string after keyword").val;
+                buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after URCL block string");
+                prog.statements.push(Node::URCLBlockNode(urcl))
+            }
+
+            TokenType::Semicolon => buf.advance(),
 
             _ => {
                 print_error("Unexpected token", src, current.start, current.end, current.lineno);
@@ -172,6 +197,7 @@ macro_rules! buf_consume {
                 $($p)|+ => { $buf.advance(); curr },
                 _ => {
                     print_error($err, $src, curr.start, curr.end, curr.lineno);
+                    draw_arrows(curr.start, curr.end, curr.lineno);
                     exit(2)
                 }
             }
@@ -179,15 +205,15 @@ macro_rules! buf_consume {
     };
 }
 
-fn make_type(buf: &mut TokenBuffer) -> HType {
-    let mut var_type = HType::Named(buf.current("").val.clone());
+fn make_type(buf: &mut TokenBuffer) -> Type {
+    let mut var_type = Type::Named(buf.current("").val.clone());
     while buf.in_bounds() {
         let curr = buf.current("");
         if curr.tok_type == TokenType::Identifier {
             return var_type;
         }
         if curr.tok_type == TokenType::Mult {
-            var_type = HType::Ptr(Box::new(var_type))
+            var_type = Type::Ptr(Box::new(var_type))
         }
         buf.advance()
     }
@@ -211,12 +237,14 @@ fn expr_parser(buf: &mut TokenBuffer, src: &String) -> Expr {
                 Expr::Ident(tok.val)
             }
             TokenType::String => Expr::Str(tok.val),
-            TokenType::OpenBrace => {
+            TokenType::OpenParen => {
                 let node = expr(buf, src);
-                buf_consume!(buf, (TokenType::CloseBrace), src, "");
+                println!("{:#?}", buf.current(""));
+                buf_consume!(buf, (TokenType::CloseParen), src, "Missing closing ')'");
                 node
             }
-            _ => {
+            other => {
+                println!("{:#?}", other);
                 unreachable!()
             }
         }
