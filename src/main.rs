@@ -23,12 +23,7 @@ struct Args {
     #[clap(value_name = "Input file")]
     input_file: String,
 
-    #[clap(
-        short,
-        name = "o",
-        value_name = "Output file",
-        default_value = "./out.urcl"
-    )]
+    #[clap(short, name = "o", value_name = "Output file", default_value = "./out.urcl")]
     output_file: String,
 
     #[clap(short, name="l", value_name="Library path", action=ArgAction::Append)]

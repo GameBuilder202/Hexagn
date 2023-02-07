@@ -106,14 +106,6 @@ pub enum Expr {
     Number(i64),
     Ident(String),
     Str(String),
-    BiOp {
-        lhs: Box<Expr>,
-        op: Operation,
-        rhs: Box<Expr>,
-    },
-    Comp {
-        lhs: Box<Expr>,
-        comp: Comparison,
-        rhs: Box<Expr>,
-    },
+    BiOp { lhs: Box<Expr>, op: Operation, rhs: Box<Expr> },
+    Comp { lhs: Box<Expr>, comp: Comparison, rhs: Box<Expr> },
 }

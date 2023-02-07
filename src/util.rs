@@ -20,16 +20,12 @@ pub fn draw_arrows(start: usize, end: usize, lineno: usize) {
     let start = start + lineno.to_string().len() + 2;
     let end = end + lineno.to_string().len() + 2;
 
-    std::io::stderr()
-        .write_fmt(format_args!("\x1b[31m"))
-        .unwrap();
+    std::io::stderr().write_fmt(format_args!("\x1b[31m")).unwrap();
     for _ in 0..start {
         std::io::stderr().write_fmt(format_args!(" ")).unwrap()
     }
     for _ in start..end {
         std::io::stderr().write_fmt(format_args!("^")).unwrap()
     }
-    std::io::stderr()
-        .write_fmt(format_args!("\x1b[0m\n"))
-        .unwrap();
+    std::io::stderr().write_fmt(format_args!("\x1b[0m\n")).unwrap();
 }

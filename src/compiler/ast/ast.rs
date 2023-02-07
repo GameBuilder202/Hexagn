@@ -18,27 +18,13 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
         let current = buf.current("").clone();
         match current.tok_type {
             // Variable def or function def
-            TokenType::Void
-            | TokenType::Int
-            | TokenType::Uint
-            | TokenType::Float
-            | TokenType::String
-            | TokenType::Char => {
+            TokenType::Void | TokenType::Int | TokenType::Uint | TokenType::Float | TokenType::String | TokenType::Char => {
                 // Making the type
                 let var_type = make_type(&mut buf);
-                let ident = buf_consume!(
-                    buf,
-                    (TokenType::Identifier),
-                    src,
-                    "Expected identifier after type"
-                );
+                let ident = buf_consume!(buf, (TokenType::Identifier), src, "Expected identifier after type");
                 let op = buf_consume!(
                     buf,
-                    (
-                        TokenType::Assign,
-                        TokenType::OpenParen,
-                        TokenType::Semicolon
-                    ),
+                    (TokenType::Assign, TokenType::OpenParen, TokenType::Semicolon),
                     src,
                     "Expected '=' or '(' or ';' after identifier"
                 );
@@ -47,32 +33,15 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                     // Variable definition
                     TokenType::Assign => {
                         if current.tok_type == TokenType::Void {
-                            print_error(
-                                "Cannot have void for variable type",
-                                src,
-                                current.start,
-                                current.end,
-                                current.lineno,
-                            );
+                            print_error("Cannot have void for variable type", src, current.start, current.end, current.lineno);
                             exit(2)
                         }
                         if !buf.in_bounds() {
-                            print_error(
-                                "Expected expression after '='",
-                                src,
-                                op.start,
-                                op.end,
-                                op.lineno,
-                            );
+                            print_error("Expected expression after '='", src, op.start, op.end, op.lineno);
                             exit(2)
                         }
                         let expr = expr_parser(&mut buf, src);
-                        buf_consume!(
-                            buf,
-                            (TokenType::Semicolon),
-                            src,
-                            "Expected ';' after expression"
-                        );
+                        buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after expression");
                         prog.statements.push(Node::VarDefineNode {
                             typ: var_type,
                             ident: ident.val,
@@ -93,38 +62,18 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                     // Function definition
                     TokenType::OpenParen => {
                         let mut args = vec![];
-                        if !buf.in_bounds()
-                            || !(is_datatype(buf.current(""))
-                                || buf.current("").tok_type == TokenType::CloseParen)
-                        {
-                            print_error(
-                                "Expected type or '(' after ')'",
-                                src,
-                                op.start,
-                                op.end,
-                                op.lineno,
-                            );
+                        if !buf.in_bounds() || !(is_datatype(buf.current("")) || buf.current("").tok_type == TokenType::CloseParen) {
+                            print_error("Expected type or '(' after ')'", src, op.start, op.end, op.lineno);
                             exit(2)
                         }
 
                         while buf.in_bounds() && buf.current("").tok_type != TokenType::CloseParen {
                             let arg_type = make_type(&mut buf);
-                            let arg_ident = buf_consume!(
-                                buf,
-                                (TokenType::Identifier),
-                                src,
-                                "Expected identifier after type"
-                            );
+                            let arg_ident = buf_consume!(buf, (TokenType::Identifier), src, "Expected identifier after type");
                             args.push((arg_type, arg_ident.val));
 
                             if !buf.in_bounds() {
-                                print_error(
-                                    "Expected ')' or ',' after identifier",
-                                    src,
-                                    arg_ident.start,
-                                    arg_ident.end,
-                                    arg_ident.lineno,
-                                );
+                                print_error("Expected ')' or ',' after identifier", src, arg_ident.start, arg_ident.end, arg_ident.lineno);
                                 exit(2)
                             }
                             let curr = buf.current("");
@@ -132,13 +81,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                                 break;
                             }
                             if curr.tok_type != TokenType::Semicolon {
-                                print_error(
-                                    "Expected ')' or ',' after identifier",
-                                    src,
-                                    curr.start,
-                                    curr.end,
-                                    curr.lineno,
-                                );
+                                print_error("Expected ')' or ',' after identifier", src, curr.start, curr.end, curr.lineno);
                                 exit(2)
                             }
                             buf.advance()
@@ -162,28 +105,22 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
 
             TokenType::If => {
                 buf.advance();
-                buf_consume!(buf, (TokenType::OpenParen), src, "Expected '(' after if");
                 let expr = expr_parser(&mut buf, src);
-                buf_consume!(
-                    buf,
-                    (TokenType::CloseParen),
-                    src,
-                    "Expected ')' after if expression"
-                );
                 let body = sub_program(&mut buf, src, "if statement");
                 prog.statements.push(Node::IfNode { cond: expr, body })
+            }
+
+            TokenType::While => {
+                buf.advance();
+                let expr = expr_parser(&mut buf, src);
+                let body = sub_program(&mut buf, src, "if statement");
+                prog.statements.push(Node::WhileNode { cond: expr, body })
             }
 
             TokenType::Semicolon => {}
 
             _ => {
-                print_error(
-                    "Unexpected token",
-                    src,
-                    current.start,
-                    current.end,
-                    current.lineno,
-                );
+                print_error("Unexpected token", src, current.start, current.end, current.lineno);
                 exit(2)
             }
         }
@@ -221,15 +158,8 @@ impl TokenBuffer {
     }
 
     pub fn current(&self, err: &str) -> &Token {
-        let tmp = if self.pos != 0 {
-            &self.toks[self.pos - 1]
-        } else {
-            &self.toks[self.pos]
-        };
-        unwrap_or_err!(
-            &self.toks.get(self.pos),
-            (self.src, tmp.start, tmp.end, tmp.lineno, err)
-        )
+        let tmp = if self.pos != 0 { &self.toks[self.pos - 1] } else { &self.toks[self.pos] };
+        unwrap_or_err!(&self.toks.get(self.pos), (self.src, tmp.start, tmp.end, tmp.lineno, err))
     }
 }
 
@@ -268,23 +198,14 @@ fn expr_parser(buf: &mut TokenBuffer, src: &String) -> Expr {
     fn factor(buf: &mut TokenBuffer, src: &String) -> Expr {
         let tok = buf_consume!(
             buf,
-            (
-                TokenType::Num,
-                TokenType::Identifier,
-                TokenType::Str,
-                TokenType::OpenParen
-            ),
+            (TokenType::Num, TokenType::Identifier, TokenType::Str, TokenType::OpenParen),
             src,
             "Expected number or identifier or string or open paren"
         );
         match tok.tok_type {
             TokenType::Num => Expr::Number(tok.val.parse::<i64>().unwrap()),
             TokenType::Identifier => {
-                if buf
-                    .current("Expected operation or '(' or ';' after identifier")
-                    .tok_type
-                    == TokenType::OpenParen
-                {
+                if buf.current("Expected operation or '(' or ';' after identifier").tok_type == TokenType::OpenParen {
                     todo!("Make Functions stuff")
                 }
                 Expr::Ident(tok.val)
@@ -316,9 +237,7 @@ fn expr_parser(buf: &mut TokenBuffer, src: &String) -> Expr {
 
     fn term(buf: &mut TokenBuffer, src: &String) -> Expr {
         let mut node = factor(buf, src);
-        while buf.current("Expected operation").tok_type == TokenType::Mult
-            || buf.current("").tok_type == TokenType::Div
-        {
+        while buf.current("Expected operation").tok_type == TokenType::Mult || buf.current("").tok_type == TokenType::Div {
             let op = buf.current("").clone();
             buf.advance();
             node = Expr::BiOp {
@@ -332,9 +251,7 @@ fn expr_parser(buf: &mut TokenBuffer, src: &String) -> Expr {
 
     fn expr(buf: &mut TokenBuffer, src: &String) -> Expr {
         let mut node = term(buf, src);
-        while buf.current("Expected operation").tok_type == TokenType::Plus
-            || buf.current("").tok_type == TokenType::Minus
-        {
+        while buf.current("Expected operation").tok_type == TokenType::Plus || buf.current("").tok_type == TokenType::Minus {
             let op = buf.current("").clone();
             buf.advance();
             node = Expr::BiOp {
@@ -359,12 +276,7 @@ fn is_datatype(tok: &Token) -> bool {
 }
 
 fn sub_program(buf: &mut TokenBuffer, src: &String, err: &str) -> Program {
-    buf_consume!(
-        buf,
-        (TokenType::OpenBrace),
-        src,
-        format!("Expected '{{' for {}", err).as_str()
-    );
+    buf_consume!(buf, (TokenType::OpenBrace), src, format!("Expected '{{' for {}", err).as_str());
     let mut body = vec![];
     let mut scope = 0;
     while buf.in_bounds() {
@@ -380,12 +292,7 @@ fn sub_program(buf: &mut TokenBuffer, src: &String, err: &str) -> Program {
         body.push(curr);
         buf.advance()
     }
-    buf_consume!(
-        buf,
-        (TokenType::CloseBrace),
-        src,
-        format!("Expected '}}' for {}", err).as_str()
-    );
+    buf_consume!(buf, (TokenType::CloseBrace), src, format!("Expected '}}' for {}", err).as_str());
 
     make_ast(src, &body)
 }

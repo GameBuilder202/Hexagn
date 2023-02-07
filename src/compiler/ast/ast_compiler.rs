@@ -1,2 +1,1 @@
-pub fn compile_ast(prog: Program,) {
-}
+pub fn compile_ast(prog: Program) {}

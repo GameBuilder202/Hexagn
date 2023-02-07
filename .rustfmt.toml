@@ -1,5 +1,5 @@
 max_width = 200
 fn_call_width = 100
-fn_brace_style=AlwaysNextLine
-item_brace_style=AlwaysNextLine
+# rustfmt please I need this
+# brace_style="AlwaysNextLine"
 

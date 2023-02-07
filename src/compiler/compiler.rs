@@ -15,10 +15,7 @@ pub fn compiler(args: &Args) -> Program {
 
     let mut input_file = unwrap_or_err!(File::open(&args.input_file), "Unable to open input file");
 
-    unwrap_or_err!(
-        input_file.read_to_string(&mut src),
-        "Could not read input file"
-    );
+    unwrap_or_err!(input_file.read_to_string(&mut src), "Could not read input file");
     src = format!("\n{}", src);
 
     let toks = tokenize(&src);

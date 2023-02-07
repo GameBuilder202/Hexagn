@@ -309,13 +309,7 @@ pub fn tokenize(src: &String) -> Vec<Token> {
             let _char;
 
             if !buf.in_bounds() {
-                print_error(
-                    "Expected character after ' at line {}",
-                    src,
-                    start,
-                    buf.line_pos(&lineno),
-                    lineno,
-                );
+                print_error("Expected character after ' at line {}", src, start, buf.line_pos(&lineno), lineno);
                 exit(1)
             }
             if buf.current("", &Default::default()) == '\\' {
@@ -336,13 +330,7 @@ pub fn tokenize(src: &String) -> Vec<Token> {
                     '\\' => _char = '\\',
 
                     _ => {
-                        print_error(
-                            "Invalid escape character at line {}",
-                            src,
-                            start,
-                            buf.line_pos(&lineno),
-                            lineno,
-                        );
+                        print_error("Invalid escape character at line {}", src, start, buf.line_pos(&lineno), lineno);
                         exit(1)
                     }
                 }
@@ -360,13 +348,7 @@ pub fn tokenize(src: &String) -> Vec<Token> {
                 },
             ) != '\''
             {
-                print_error(
-                    "Expected closing ' at line {}",
-                    src,
-                    start,
-                    buf.line_pos(&lineno),
-                    lineno,
-                );
+                print_error("Expected closing ' at line {}", src, start, buf.line_pos(&lineno), lineno);
                 exit(1)
             }
 
@@ -402,24 +384,12 @@ pub fn tokenize(src: &String) -> Vec<Token> {
                         '\\' => _str += "\\",
 
                         _ => {
-                            print_error(
-                                "Invalid escape character at line {}",
-                                src,
-                                start,
-                                buf.line_pos(&lineno),
-                                lineno,
-                            );
+                            print_error("Invalid escape character at line {}", src, start, buf.line_pos(&lineno), lineno);
                             exit(1)
                         }
                     }
                 } else if buf.current("", &Default::default()) == '\n' {
-                    print_error(
-                        "Unterminated string at line {}",
-                        src,
-                        start,
-                        buf.line_pos(&lineno),
-                        lineno,
-                    );
+                    print_error("Unterminated string at line {}", src, start, buf.line_pos(&lineno), lineno);
                     exit(1)
                 } else {
                     _str += &buf.current("", &Default::default()).to_string()
@@ -634,10 +604,7 @@ struct Buffer {
 
 impl Buffer {
     pub fn new(src: &String) -> Buffer {
-        Buffer {
-            data: src.clone(),
-            index: 0,
-        }
+        Buffer { data: src.clone(), index: 0 }
     }
 
     pub fn in_bounds(&self) -> bool {
@@ -654,10 +621,7 @@ impl Buffer {
     }
 
     pub fn current(&self, err: &str, pos: &PosInfo) -> char {
-        unwrap_or_err!(
-            self.data.chars().nth(self.index),
-            (pos.src, pos.start, pos.end, pos.lineno, err)
-        )
+        unwrap_or_err!(self.data.chars().nth(self.index), (pos.src, pos.start, pos.end, pos.lineno, err))
     }
 
     pub fn pos(&self) -> usize {
