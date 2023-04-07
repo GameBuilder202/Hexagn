@@ -129,15 +129,14 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
             TokenType::Identifier => {
                 let ident = current.val;
                 buf.advance();
-                let op = buf_consume!(buf, (TokenType::EQ, TokenType::OpenParen), src, "Expected '=' or '(' after identifier");
+                let op = buf_consume!(buf, (TokenType::Assign, TokenType::OpenParen), src, "Expected '=' or '(' after identifier");
 
                 debug_sym_str += ident.as_str();
 
                 match op.tok_type {
-                    TokenType::EQ => {
+                    TokenType::Assign => {
                         debug_sym_str += " = ";
 
-                        buf.advance();
                         let expr = expr_parser(&mut buf, &mut debug_sym_str, src);
                         buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after variable assignment");
 

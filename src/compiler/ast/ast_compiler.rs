@@ -50,7 +50,11 @@ fn internal_compile_ast(
                     writeln!(out, "// {}: {}", sym.lineno, sym.val)?
                 }
 
-                write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?;
+                match expr {
+                    Expr::Number(num) => writeln!(out, "IMM R2 {}", num)?,
+
+                    _ => write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?
+                }
                 if let Some(offset) = var_stack.get_offset(ident) {
                     writeln!(out, "LSTR R1 -{} R2", offset)?
                 }
