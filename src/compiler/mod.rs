@@ -4,6 +4,7 @@ pub use compiler::*;
 use crate::util::{draw_arrows, get_line};
 pub mod ast;
 pub mod lexer;
+pub mod linker;
 
 pub fn print_error(err: &str, src: &String, start: usize, end: usize, lineno: usize) {
     eprintln!("Error: {} at line {}", err, lineno);

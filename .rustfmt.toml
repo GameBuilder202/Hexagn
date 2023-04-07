@@ -1,5 +1,4 @@
-max_width = 200
+max_width = 150
 fn_call_width = 100
 # rustfmt please I need this
 # brace_style="AlwaysNextLine"
-
