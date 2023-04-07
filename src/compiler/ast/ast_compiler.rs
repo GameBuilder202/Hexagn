@@ -115,7 +115,7 @@ fn internal_compile_ast(
                 let func = linker.get_func(name, &arg_types);
                 if let Some(func) = func {
                     for arg in args {
-                        writeln!(out, "{}", compile_expr(arg, linker, &var_stack, func_args, 32).unwrap())?
+                        write!(out, "{}", compile_expr(arg, linker, &var_stack, func_args, 32).unwrap())?
                     }
                     writeln!(out, "CAL .{}", func.get_signature())?;
 
@@ -128,6 +128,13 @@ fn internal_compile_ast(
                     eprintln!("{}: {}", sym.lineno, sym.val);
                     exit(1)
                 }
+            }
+
+            Node::ReturnNode(expr) => {
+                if let Some(expr) = expr {
+                    write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?
+                }
+                writeln!(out, "RET")?
             }
 
             Node::InlineURCL(urcl) => {

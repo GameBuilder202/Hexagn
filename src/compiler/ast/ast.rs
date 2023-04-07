@@ -205,6 +205,19 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                 prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::InlineURCL(urcl)))
             }
 
+            TokenType::Return => {
+                buf.advance();
+                let expr;
+                if buf.current("Expected expression or ';'").tok_type == TokenType::Semicolon {
+                    expr = None
+                }
+                else {
+                    expr = Some(expr_parser(&mut buf, &mut debug_sym_str, src));
+                    buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after return expression");
+                }
+                prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::ReturnNode(expr)))
+            }
+
             TokenType::Semicolon => buf.advance(),
 
             _ => {
@@ -303,7 +316,7 @@ fn expr_parser(buf: &mut TokenBuffer, debug_sym_str: &mut String, src: &String) 
                 }
                 Expr::Ident(tok.val)
             }
-            TokenType::String => Expr::Str(tok.val),
+            TokenType::Str => Expr::Str(tok.val),
             TokenType::OpenParen => {
                 let node = expr(buf, debug_sym_str, src);
                 *debug_sym_str += ")";

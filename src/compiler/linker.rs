@@ -30,8 +30,41 @@ impl Linker {
     }
 
     pub fn get_func(&self, name: &String, arg_types: &Vec<Type>) -> Option<LinkerFunc> {
+        fn transform_arg_type(arg_type: &Type) -> String {
+            match arg_type {
+                Type::Named(name) => match name.as_str() {
+                    "void" => String::from("void"),
+                    "int8" => String::from("int"),
+                    "int16" => String::from("int"),
+                    "int32" => String::from("int"),
+                    "int64" => String::from("int"),
+
+                    "uint8" => String::from("int"),
+                    "uint16" => String::from("int"),
+                    "uint32" => String::from("int"),
+                    "uint64" => String::from("int"),
+
+                    "int" => String::from("int"),
+
+                    "float32" => String::from("f32"),
+                    "float64" => String::from("f64"),
+
+                    "string" => String::from("string"),
+                    "char" => String::from("char"),
+
+                    _ => unreachable!()
+                }
+
+                Type::Ptr(typ) => format!("{}*", transform_arg_type(typ)),
+                Type::Arr(typ) => format!("{}[]", transform_arg_type(typ)),
+                Type::Const(typ) => format!("{}-const", transform_arg_type(typ))
+            }
+        }
+
         for func in &self.funcs {
-            if func.name == *name && func.arg_types == *arg_types {
+            let func_arg_types = func.arg_types.iter().map(transform_arg_type).collect::<Vec<_>>();
+            let arg_types = arg_types.iter().map(transform_arg_type).collect::<Vec<_>>();
+            if func.name == *name && func_arg_types == arg_types {
                 return Some(func.clone());
             }
         }

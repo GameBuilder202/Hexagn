@@ -52,6 +52,7 @@ pub enum Node {
         cond: Expr,
         body: Program,
     },
+    ReturnNode(Option<Expr>),
     ImportNode(String),
     InlineURCL(String),
 }
