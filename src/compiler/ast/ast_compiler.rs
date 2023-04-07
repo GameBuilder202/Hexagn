@@ -138,6 +138,9 @@ fn internal_compile_ast(
                 if let Some(expr) = expr {
                     write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?
                 }
+                // cdecl exit
+                writeln!(out, "MOV SP R1")?;
+                writeln!(out, "POP R1\n")?;
                 writeln!(out, "RET")?
             }
 
@@ -171,7 +174,8 @@ fn internal_compile_ast(
 
             // cdecl exit
             writeln!(out, "MOV SP R1")?;
-            writeln!(out, "POP R1\n")?
+            writeln!(out, "POP R1\n")?;
+            writeln!(out, "RET")?
         }
     }
 
