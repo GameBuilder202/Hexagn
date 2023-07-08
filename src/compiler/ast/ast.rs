@@ -4,7 +4,6 @@ use super::nodes::*;
 use crate::{
     buf_consume,
     compiler::{
-        draw_arrows,
         lexer::{Token, TokenType},
         print_error,
     },
@@ -272,7 +271,6 @@ macro_rules! buf_consume {
                 $($p)|+ => { $buf.advance(); curr },
                 _ => {
                     print_error($err, $src, curr.start, curr.end, curr.lineno);
-                    draw_arrows(curr.start, curr.end, curr.lineno);
                     exit(2)
                 }
             }
