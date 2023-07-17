@@ -2,5 +2,5 @@
 /Cargo.lock
 /Hexagn-rust.iml
 
-/test.hxgn
+/*.hxgn
 /*.urcl
