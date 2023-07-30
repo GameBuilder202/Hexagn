@@ -25,35 +25,35 @@ impl DebugSym {
 
 #[derive(Debug)]
 pub enum Node {
-    VarDefineNode {
+    VarDefine {
         typ: Type,
         ident: String,
         expr: Option<Expr>,
     },
-    VarAssignNode {
+    VarAssign {
         ident: String,
         expr: Expr,
     },
-    FunctionNode {
+    Function {
         ret_type: Type,
         name: String,
         args: Vec<(Type, String)>,
         body: Program,
     },
-    FuncCallNode {
+    FuncCall {
         name: String,
         args: Vec<Expr>,
     },
-    WhileNode {
+    While {
         cond: Expr,
         body: Program,
     },
-    IfNode {
+    If {
         cond: Expr,
         body: Program,
     },
-    ReturnNode(Option<Expr>),
-    ImportNode(String),
+    Return(Option<Expr>),
+    Import(String),
     InlineURCL(String),
 }
 

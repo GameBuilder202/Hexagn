@@ -32,7 +32,7 @@ fn internal_compile_ast(
 
     for (sym, stmt) in &prog.statements {
         match stmt {
-            Node::VarDefineNode { typ, ident, expr } => {
+            Node::VarDefine { typ, ident, expr } => {
                 if compile_args.debug_symbols {
                     writeln!(out, "// {}: {}", sym.lineno, sym.val)?
                 }
@@ -45,7 +45,7 @@ fn internal_compile_ast(
                 }
             }
 
-            Node::VarAssignNode { ident, expr } => {
+            Node::VarAssign { ident, expr } => {
                 if compile_args.debug_symbols {
                     writeln!(out, "// {}: {}", sym.lineno, sym.val)?
                 }
@@ -53,14 +53,14 @@ fn internal_compile_ast(
                 match expr {
                     Expr::Number(num) => writeln!(out, "IMM R2 {}", num)?,
 
-                    _ => write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?
+                    _ => write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?,
                 }
                 if let Some(offset) = var_stack.get_offset(ident) {
                     writeln!(out, "LSTR R1 -{} R2", offset)?
                 }
             }
 
-            Node::FunctionNode { ret_type, name, args, body } => {
+            Node::Function { ret_type, name, args, body } => {
                 let code = internal_compile_ast(
                     body,
                     AstCompileArgs {
@@ -74,12 +74,12 @@ fn internal_compile_ast(
                 )
                 .unwrap();
 
-                let func = LinkerFunc::new(ret_type, name, &args.into_iter().map(|arg| arg.0.clone()).collect::<Vec<_>>(), &code);
+                let func = LinkerFunc::new(ret_type, name, &args.iter().map(|arg| arg.0.clone()).collect::<Vec<_>>(), &code);
 
                 linker.add_func(&func)
             }
 
-            Node::FuncCallNode { name, args } => {
+            Node::FuncCall { name, args } => {
                 if compile_args.debug_symbols {
                     writeln!(out, "// {}: {}", sym.lineno, sym.val)?
                 }
@@ -134,7 +134,7 @@ fn internal_compile_ast(
                 }
             }
 
-            Node::ReturnNode(expr) => {
+            Node::Return(expr) => {
                 if let Some(expr) = expr {
                     write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?
                 }
@@ -156,10 +156,8 @@ fn internal_compile_ast(
     }
 
     let frames = var_stack.pop_frame();
-    if compile_args.pop_frame {
-        if frames > 0 {
-            writeln!(out, "ADD SP SP {}", frames)?
-        }
+    if compile_args.pop_frame && frames > 0 {
+        writeln!(out, "ADD SP SP {}", frames)?
     }
 
     if !compile_args.standalone {
@@ -220,7 +218,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
                 instr_queue: &mut VecDeque<String>,
             ) -> Result<String, std::fmt::Error> {
                 let mut ret = String::new();
-                let mut reg_count = reg_count.clone();
+                let mut reg_count = reg_count;
 
                 if let Expr::BiOp { lhs, op, rhs } = expr {
                     write!(ret, "{} R{} ", get_op_str(op), reg_count)?;
@@ -285,7 +283,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
                     {
                         let rhs1 = rhs;
                         match *rhs1.clone() {
-                            Expr::Number(num) => write!(ret, "{}\n", num)?,
+                            Expr::Number(num) => writeln!(ret, "{}", num)?,
 
                             Expr::Ident(name) => {
                                 if let Some(offset) = vars.get_offset(&name) {
@@ -312,7 +310,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
                                     eprintln!("Error: Undefined variable {}", name);
                                     exit(1)
                                 }
-                                write!(ret, "R{}\n", reg_count)?
+                                writeln!(ret, "R{}", reg_count)?
                             }
 
                             Expr::Str(_) => todo!(),
@@ -330,7 +328,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
                                 )
                                 .unwrap();
                                 instr_queue.push_back(code);
-                                write!(ret, "R{}\n", reg_count)?
+                                writeln!(ret, "R{}", reg_count)?
                             }
 
                             _ => todo!(),

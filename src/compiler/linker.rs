@@ -29,7 +29,7 @@ impl Linker {
         self.funcs.push(function.clone())
     }
 
-    pub fn get_func(&self, name: &String, arg_types: &Vec<Type>) -> Option<LinkerFunc> {
+    pub fn get_func(&self, name: &String, arg_types: &[Type]) -> Option<LinkerFunc> {
         fn transform_arg_type(arg_type: &Type) -> String {
             match arg_type {
                 Type::Named(name) => match name.as_str() {
@@ -52,12 +52,12 @@ impl Linker {
                     "string" => String::from("string"),
                     "char" => String::from("char"),
 
-                    _ => unreachable!()
-                }
+                    _ => unreachable!(),
+                },
 
                 Type::Ptr(typ) => format!("{}*", transform_arg_type(typ)),
                 Type::Arr(typ) => format!("{}[]", transform_arg_type(typ)),
-                Type::Const(typ) => format!("{}-const", transform_arg_type(typ))
+                Type::Const(typ) => format!("{}-const", transform_arg_type(typ)),
             }
         }
 
@@ -84,12 +84,12 @@ pub struct LinkerFunc {
     pub code: String,
 }
 impl LinkerFunc {
-    pub fn new(ret_type: &Type, name: &String, arg_types: &Vec<Type>, code: &String) -> Self {
+    pub fn new(ret_type: &Type, name: &str, arg_types: &[Type], code: &str) -> Self {
         Self {
             ret_type: ret_type.clone(),
-            name: name.clone(),
-            arg_types: arg_types.clone(),
-            code: code.clone(),
+            name: name.to_owned(),
+            arg_types: arg_types.to_vec(),
+            code: code.to_owned(),
         }
     }
 
@@ -119,10 +119,9 @@ impl LinkerFunc {
 
     fn encode_type(typ: &Type) -> (usize, String) {
         let s;
-        let len;
         let mut is_ident = false;
 
-        match typ {
+        let len = match typ {
             Type::Named(name) => {
                 match name.as_str() {
                     "void" => s = String::from("v"),
@@ -148,12 +147,12 @@ impl LinkerFunc {
                     }
                 }
 
-                len = name.len()
+                name.len()
             }
             Type::Ptr(_) => todo!(),
             Type::Arr(_) => todo!(),
             Type::Const(_) => todo!(),
-        }
+        };
 
         (
             {

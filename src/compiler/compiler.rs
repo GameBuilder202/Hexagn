@@ -35,7 +35,7 @@ pub fn compiler(args: &Args, linker: &mut Linker) -> String {
     }
     // println!("{:#?}", prog);
 
-    let code = compile_ast(
+    compile_ast(
         &prog,
         AstCompileArgs {
             debug_symbols: args.debug_symbols,
@@ -44,7 +44,5 @@ pub fn compiler(args: &Args, linker: &mut Linker) -> String {
         },
         linker,
     )
-    .unwrap();
-
-    code
+    .unwrap()
 }

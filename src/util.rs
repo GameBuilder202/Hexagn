@@ -10,14 +10,16 @@ pub fn get_line(src: &String, lineno: usize) -> String {
     res
 }
 
-pub fn find_nth(src: &String, c: &char, nth: &usize) -> usize {
+pub fn find_nth(src: &str, c: &char, nth: &usize) -> usize {
     src.match_indices(*c).nth(*nth).unwrap().0
 }
 
 pub fn draw_arrows(start: usize, mut end: usize, lineno: usize) {
     let mut msg = format!("\x1b[31m{}", " ".repeat(lineno.to_string().len()));
 
-    if end == start { end += 1 }
+    if end == start {
+        end += 1
+    }
     for _ in 0..=start {
         msg += " ";
     }

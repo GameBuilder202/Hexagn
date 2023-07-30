@@ -10,7 +10,7 @@ use crate::{
     unwrap_or_err,
 };
 
-pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
+pub fn make_ast(src: &String, toks: &[Token]) -> Program {
     let mut prog = Program::new();
     let mut buf = TokenBuffer::new(src, toks);
 
@@ -55,7 +55,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
 
                         prog.statements.push((
                             DebugSym::new(debug_sym_str, lineno),
-                            Node::VarDefineNode {
+                            Node::VarDefine {
                                 typ: var_type,
                                 ident: ident.val,
                                 expr: Some(expr),
@@ -68,7 +68,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         debug_sym_str += ";";
                         prog.statements.push((
                             DebugSym::new(debug_sym_str, lineno),
-                            Node::VarDefineNode {
+                            Node::VarDefine {
                                 typ: var_type,
                                 ident: ident.val,
                                 expr: None,
@@ -112,7 +112,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         let func_body = sub_program(&mut buf, src, "function body");
                         prog.statements.push((
                             DebugSym::new(debug_sym_str, lineno),
-                            Node::FunctionNode {
+                            Node::Function {
                                 ret_type: var_type,
                                 name: ident.val,
                                 args,
@@ -142,7 +142,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         debug_sym_str += ";";
 
                         prog.statements
-                            .push((DebugSym::new(debug_sym_str, lineno), Node::VarAssignNode { ident, expr }))
+                            .push((DebugSym::new(debug_sym_str, lineno), Node::VarAssign { ident, expr }))
                     }
 
                     TokenType::OpenParen => {
@@ -152,7 +152,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                         debug_sym_str += ";";
 
                         prog.statements
-                            .push((DebugSym::new(debug_sym_str, lineno), Node::FuncCallNode { name: ident, args }))
+                            .push((DebugSym::new(debug_sym_str, lineno), Node::FuncCall { name: ident, args }))
                     }
 
                     _ => unreachable!(),
@@ -164,7 +164,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                 let expr = expr_parser(&mut buf, &mut debug_sym_str, src);
                 let body = sub_program(&mut buf, src, "if statement");
                 prog.statements
-                    .push((DebugSym::new(debug_sym_str, lineno), Node::IfNode { cond: expr, body }))
+                    .push((DebugSym::new(debug_sym_str, lineno), Node::If { cond: expr, body }))
             }
 
             TokenType::While => {
@@ -172,7 +172,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                 let expr = expr_parser(&mut buf, &mut debug_sym_str, src);
                 let body = sub_program(&mut buf, src, "while statement");
                 prog.statements
-                    .push((DebugSym::new(debug_sym_str, lineno), Node::WhileNode { cond: expr, body }))
+                    .push((DebugSym::new(debug_sym_str, lineno), Node::While { cond: expr, body }))
             }
 
             TokenType::Import => {
@@ -193,7 +193,7 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                     buf.advance()
                 }
                 buf.advance();
-                prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::ImportNode(lib_name)))
+                prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::Import(lib_name)))
             }
 
             TokenType::URCLBlock => {
@@ -208,12 +208,11 @@ pub fn make_ast(src: &String, toks: &Vec<Token>) -> Program {
                 let expr;
                 if buf.current("Expected expression or ';'").tok_type == TokenType::Semicolon {
                     expr = None
-                }
-                else {
+                } else {
                     expr = Some(expr_parser(&mut buf, &mut debug_sym_str, src));
                     buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after return expression");
                 }
-                prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::ReturnNode(expr)))
+                prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::Return(expr)))
             }
 
             TokenType::Semicolon => buf.advance(),
@@ -235,7 +234,7 @@ struct TokenBuffer {
 }
 
 impl TokenBuffer {
-    pub fn new(src: &String, toks: &Vec<Token>) -> TokenBuffer {
+    pub fn new(src: &String, toks: &[Token]) -> TokenBuffer {
         TokenBuffer {
             src: src.to_string(),
             toks: toks.to_vec(),
@@ -379,7 +378,9 @@ fn args_parser(buf: &mut TokenBuffer, debug_sym_str: &mut String, src: &String) 
         let expr = expr_parser(buf, debug_sym_str, src);
         args.push(expr);
         let tok = buf_consume!(buf, (TokenType::Comma, TokenType::CloseParen), src, "Expected ',' or '(' after argument expression");
-        if tok.tok_type == TokenType::CloseParen { break }
+        if tok.tok_type == TokenType::CloseParen {
+            break;
+        }
         *debug_sym_str += ", "
     }
 

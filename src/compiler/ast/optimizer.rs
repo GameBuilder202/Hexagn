@@ -5,20 +5,20 @@ use super::nodes::*;
 pub fn optimize(prog: &mut Program) {
     for (sym, stmt) in &mut prog.statements {
         match stmt {
-            Node::VarDefineNode { typ: _, ident: _, expr } => {
+            Node::VarDefine { typ: _, ident: _, expr } => {
                 if let Some(expr) = expr {
                     *expr = optimize_expr(sym, expr)
                 }
             }
 
-            Node::FunctionNode {
+            Node::Function {
                 ret_type: _,
                 name: _,
                 args: _,
                 body,
             } => optimize(body),
 
-            Node::FuncCallNode { name: _, args } => {
+            Node::FuncCall { name: _, args } => {
                 for arg in args {
                     *arg = optimize_expr(sym, arg)
                 }
