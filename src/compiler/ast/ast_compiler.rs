@@ -3,12 +3,24 @@ use std::fmt::Write;
 use std::process::exit;
 
 use super::{
-    super::linker::{Linker, LinkerFunc},
+    super::{
+        imports::ImportHelper,
+        linker::{Linker, LinkerFunc},
+        strings::StringsContainer,
+    },
     nodes::*,
 };
 
 pub fn compile_ast(prog: &Program, compile_args: AstCompileArgs, linker: &mut Linker) -> Result<String, std::fmt::Error> {
-    internal_compile_ast(prog, compile_args, linker, &VarStack::new(), &None)
+    internal_compile_ast(
+        prog,
+        compile_args,
+        linker,
+        &VarStack::new(),
+        &None,
+        &mut StringsContainer::new(),
+        &mut ImportHelper::new(),
+    )
 }
 
 fn internal_compile_ast(
@@ -17,6 +29,8 @@ fn internal_compile_ast(
     linker: &mut Linker,
     outer_scope: &VarStack,
     func_args: &Option<VarStack>,
+    strings: &mut StringsContainer,
+    imports: &mut ImportHelper,
 ) -> Result<String, std::fmt::Error> {
     let mut out = String::new();
     let mut var_stack = outer_scope.clone();
@@ -39,7 +53,7 @@ fn internal_compile_ast(
 
                 var_stack.push(ident.to_string(), typ);
                 if let Some(expr) = expr {
-                    write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?
+                    write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, strings, 32).unwrap())?;
                 } else {
                     writeln!(out, "DEC SP SP\n")?
                 }
@@ -53,7 +67,7 @@ fn internal_compile_ast(
                 match expr {
                     Expr::Number(num) => writeln!(out, "IMM R2 {}", num)?,
 
-                    _ => write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?,
+                    _ => write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, strings, 32).unwrap())?,
                 }
                 if let Some(offset) = var_stack.get_offset(ident) {
                     writeln!(out, "LSTR R1 -{} R2", offset)?
@@ -67,16 +81,24 @@ fn internal_compile_ast(
                         debug_symbols: compile_args.debug_symbols,
                         standalone: true,
                         pop_frame: false,
+                        opt_level: compile_args.opt_level,
                     },
                     linker,
                     &var_stack,
-                    func_args,
+                    {
+                        let mut func_varstack = VarStack::new();
+                        func_varstack.push_frame();
+                        args.iter().for_each(|arg| func_varstack.push(arg.1.clone(), &arg.0));
+                        &Some(func_varstack)
+                    },
+                    strings,
+                    imports,
                 )
                 .unwrap();
 
                 let func = LinkerFunc::new(ret_type, name, &args.iter().map(|arg| arg.0.clone()).collect::<Vec<_>>(), &code);
 
-                linker.add_func(&func)
+                linker.add_func(&func, true)
             }
 
             Node::FuncCall { name, args } => {
@@ -119,7 +141,7 @@ fn internal_compile_ast(
                 let func = linker.get_func(name, &arg_types);
                 if let Some(func) = func {
                     for arg in args {
-                        write!(out, "{}", compile_expr(arg, linker, &var_stack, func_args, 32).unwrap())?
+                        write!(out, "{}", compile_expr(arg, linker, &var_stack, func_args, strings, 32).unwrap())?
                     }
                     writeln!(out, "CAL .{}", func.get_signature())?;
 
@@ -136,13 +158,15 @@ fn internal_compile_ast(
 
             Node::Return(expr) => {
                 if let Some(expr) = expr {
-                    write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, 32).unwrap())?
+                    write!(out, "{}", compile_expr(expr, linker, &var_stack, func_args, strings, 32).unwrap())?
                 }
                 // cdecl exit
                 writeln!(out, "MOV SP R1")?;
-                writeln!(out, "POP R1\n")?;
+                writeln!(out, "POP R1")?;
                 writeln!(out, "RET")?
             }
+
+            Node::Import(name) => imports.import(name, compile_args, linker, sym),
 
             Node::InlineURCL(urcl) => {
                 if compile_args.debug_symbols {
@@ -172,15 +196,28 @@ fn internal_compile_ast(
 
             // cdecl exit
             writeln!(out, "MOV SP R1")?;
-            writeln!(out, "POP R1\n")?;
-            writeln!(out, "RET")?
+            writeln!(out, "POP R1")?;
+            writeln!(out, "RET")?;
+            writeln!(out)?
+        }
+
+        for (idx, string) in strings.get_strings().iter().enumerate() {
+            writeln!(out, ".str{}", idx)?;
+            writeln!(out, "DW [ \"{}\" ]", string)?
         }
     }
 
     Ok(out)
 }
 
-fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &Option<VarStack>, max: u32) -> Result<String, std::fmt::Error> {
+fn compile_expr(
+    expr: &Expr,
+    _linker: &mut Linker,
+    vars: &VarStack,
+    func_args: &Option<VarStack>,
+    strings: &mut StringsContainer,
+    max: u32,
+) -> Result<String, std::fmt::Error> {
     let mut s = String::new();
     let max = 1u64.checked_shl(max).unwrap_or(0).wrapping_sub(1);
 
@@ -194,13 +231,22 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
             }
 
             None => {
-                todo!()
+                if let Some(func_args) = func_args {
+                    if let Some(offset) = func_args.get_offset(name) {
+                        writeln!(s, "LLOD R2 R1 {}", offset + 1)?;
+                        writeln!(s, "PSH R2")?
+                    }
+                    eprintln!()
+                }
             }
         },
 
-        Expr::Str(_) => todo!(),
+        Expr::Str(value) => {
+            writeln!(s, "LOD R2 .str{}", strings.register_string(value.clone()))?;
+            writeln!(s, "PSH R2")?
+        }
 
-        Expr::BiOp { lhs: _, op: _, rhs: _ } => {
+        Expr::BiOp { .. } => {
             fn get_op_str(op: &Operation) -> &'static str {
                 match op {
                     Operation::Add => "ADD",
@@ -247,7 +293,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
                                                 reg_count += 1;
                                                 reg_count
                                             },
-                                            offset + 2
+                                            offset + 1
                                         ))
                                     }
                                 } else {
@@ -259,7 +305,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
 
                             Expr::Str(_) => todo!(),
 
-                            Expr::BiOp { lhs: _, op: _, rhs: _ } => {
+                            Expr::BiOp { .. } => {
                                 let code = compile_expr_recursive(
                                     lhs1,
                                     {
@@ -303,7 +349,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
                                                 reg_count += 1;
                                                 reg_count
                                             },
-                                            offset + 2
+                                            offset + 1
                                         ))
                                     }
                                 } else {
@@ -315,7 +361,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
 
                             Expr::Str(_) => todo!(),
 
-                            Expr::BiOp { lhs: _, op: _, rhs: _ } => {
+                            Expr::BiOp { .. } => {
                                 let code = compile_expr_recursive(
                                     rhs1,
                                     {
@@ -349,7 +395,7 @@ fn compile_expr(expr: &Expr, _linker: &mut Linker, vars: &VarStack, func_args: &
 
             write!(s, "{}", expr_str)?;
             writeln!(s, "AND R2 R2 0x{:x}", max)?;
-            writeln!(s, "PSH R2\n")?;
+            writeln!(s, "PSH R2\n")?
         }
 
         _ => todo!(),
@@ -363,15 +409,16 @@ pub struct AstCompileArgs {
     pub debug_symbols: bool,
     pub standalone: bool,
     pub pop_frame: bool,
+    pub opt_level: u32,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct Variable {
     pub name: String,
     pub typ: Type,
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 struct VarStack {
     vars: Vec<(Variable, u64)>,
     frames: Vec<u64>,

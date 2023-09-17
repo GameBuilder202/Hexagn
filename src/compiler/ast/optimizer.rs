@@ -5,11 +5,11 @@ use super::nodes::*;
 pub fn optimize(prog: &mut Program) {
     for (sym, stmt) in &mut prog.statements {
         match stmt {
-            Node::VarDefine { typ: _, ident: _, expr } => {
-                if let Some(expr) = expr {
-                    *expr = optimize_expr(sym, expr)
-                }
-            }
+            Node::VarDefine {
+                typ: _,
+                ident: _,
+                expr: Some(expr),
+            } => *expr = optimize_expr(sym, expr),
 
             Node::Function {
                 ret_type: _,

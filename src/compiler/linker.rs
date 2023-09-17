@@ -2,17 +2,19 @@ use std::process::exit;
 
 use super::ast::nodes::Type;
 
+#[derive(Debug, Clone)]
 pub struct Linker {
-    funcs: Vec<LinkerFunc>,
+    // format: (function, is_public)
+    funcs: Vec<(LinkerFunc, bool)>,
 }
 impl Linker {
     pub fn new() -> Linker {
         Linker { funcs: Vec::new() }
     }
 
-    pub fn add_func(&mut self, function: &LinkerFunc) {
+    pub fn add_func(&mut self, function: &LinkerFunc, public: bool) {
         // Check for conflicting signature
-        for func in &self.funcs {
+        for (func, _) in &self.funcs {
             let ret_type = &func.ret_type;
 
             if function.get_signature() == func.get_signature() {
@@ -26,7 +28,7 @@ impl Linker {
             }
         }
 
-        self.funcs.push(function.clone())
+        self.funcs.push((function.clone(), public))
     }
 
     pub fn get_func(&self, name: &String, arg_types: &[Type]) -> Option<LinkerFunc> {
@@ -61,7 +63,7 @@ impl Linker {
             }
         }
 
-        for func in &self.funcs {
+        for (func, _) in &self.funcs {
             let func_arg_types = func.arg_types.iter().map(transform_arg_type).collect::<Vec<_>>();
             let arg_types = arg_types.iter().map(transform_arg_type).collect::<Vec<_>>();
             if func.name == *name && func_arg_types == arg_types {
@@ -71,8 +73,12 @@ impl Linker {
         None
     }
 
-    pub fn get_funcs(&self) -> &Vec<LinkerFunc> {
-        &self.funcs
+    pub fn get_funcs(&self) -> Vec<&LinkerFunc> {
+        self.funcs.iter().map(|(f, _)| f).collect()
+    }
+
+    pub fn get_public_funcs(&self) -> Vec<&LinkerFunc> {
+        self.funcs.iter().filter(|(_, public)| *public).map(|(f, _)| f).collect()
     }
 }
 

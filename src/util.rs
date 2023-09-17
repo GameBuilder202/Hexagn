@@ -1,4 +1,4 @@
-pub fn get_line(src: &String, lineno: usize) -> String {
+pub fn get_line(src: &str, lineno: usize) -> String {
     let mut i = find_nth(src, &'\n', &(lineno - 1)) + 1;
     let mut res = String::new();
 
@@ -21,11 +21,11 @@ pub fn draw_arrows(start: usize, mut end: usize, lineno: usize) {
         end += 1
     }
     for _ in 0..=start {
-        msg += " ";
+        msg += " "
     }
     for _ in start..end {
-        msg += "^";
+        msg += "^"
     }
 
-    eprintln!("{}\x1b[0m", msg);
+    eprintln!("{}\x1b[0m", msg)
 }

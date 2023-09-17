@@ -53,7 +53,7 @@ pub enum Node {
         body: Program,
     },
     Return(Option<Expr>),
-    Import(String),
+    Import(Vec<String>),
     InlineURCL(String),
 }
 

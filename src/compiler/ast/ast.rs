@@ -147,6 +147,7 @@ pub fn make_ast(src: &String, toks: &[Token]) -> Program {
 
                     TokenType::OpenParen => {
                         let args = args_parser(&mut buf, &mut debug_sym_str, src);
+                        buf.advance();
                         buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after function call");
 
                         debug_sym_str += ";";
@@ -176,24 +177,36 @@ pub fn make_ast(src: &String, toks: &[Token]) -> Program {
             }
 
             TokenType::Import => {
-                let mut lib_name = String::new();
+                let mut lib = Vec::new();
 
                 buf.advance();
-                while buf.in_bounds() && buf.current("").tok_type != TokenType::Semicolon {
-                    lib_name += buf_consume!(buf, (TokenType::Identifier, TokenType::URCLBlock), src, "Expected module name")
-                        .val
-                        .as_str();
-                    if buf.current("Expected '.' or ':' after module name").tok_type == TokenType::Semicolon {
+                while buf.in_bounds() {
+                    lib.push(buf_consume!(buf, (TokenType::Identifier), src, "Expected module name").val);
+                    let typ = buf_consume!(
+                        buf,
+                        (TokenType::Dot, TokenType::Colon, TokenType::Semicolon),
+                        src,
+                        "Expected '.' or ':' or ';' after module name"
+                    )
+                    .tok_type;
+                    if typ == TokenType::Semicolon {
                         break;
                     }
-                    lib_name += buf_consume!(buf, (TokenType::Dot, TokenType::Colon), src, "Expected '.' or ':' after module name")
-                        .val
-                        .as_str();
+                    // There must be a file name (with extension) after this
+                    else if typ == TokenType::Colon {
+                        let file_name = buf_consume!(buf, (TokenType::Identifier), src, "Expected file name after ':'").val;
+                        buf_consume!(buf, (TokenType::Dot), src, "Expected '.' after file name");
+                        let ext = buf_consume!(buf, (TokenType::Identifier, TokenType::URCLBlock), src, "Expected file extension after '.'");
+                        if ext.val != "hxgn" && ext.val != "urcl" {
+                            print_error("File extension is not .hxgn or .urcl", src, ext.start, ext.end, ext.lineno)
+                        }
+                        lib.push(file_name + "." + &ext.val);
+                        buf_consume!(buf, (TokenType::Semicolon), src, "Expected ';' after file extension");
 
-                    buf.advance()
+                        break;
+                    }
                 }
-                buf.advance();
-                prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::Import(lib_name)))
+                prog.statements.push((DebugSym::new(debug_sym_str, lineno), Node::Import(lib)))
             }
 
             TokenType::URCLBlock => {
@@ -305,9 +318,11 @@ fn expr_parser(buf: &mut TokenBuffer, debug_sym_str: &mut String, src: &String) 
             TokenType::Num => Expr::Number(tok.val.parse::<i64>().unwrap()),
             TokenType::Identifier => {
                 if buf.current("Expected operation or '(' or ';' after identifier").tok_type == TokenType::OpenParen {
+                    buf.advance();
                     *debug_sym_str += "(";
                     let args = args_parser(buf, debug_sym_str, src);
                     *debug_sym_str += ")";
+                    buf.advance();
                     return Expr::FuncCall { name: tok.val, args };
                 }
                 Expr::Ident(tok.val)

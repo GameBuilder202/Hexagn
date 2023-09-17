@@ -18,7 +18,6 @@ fn main() {
     let code = compiler(
         &compiler::Args {
             input_file: args.input_file,
-            output_file: args.output_file.clone(),
             no_main: args.no_main,
             debug_symbols: args.debug_symbols,
             opt_level: args.opt_level,
@@ -27,7 +26,7 @@ fn main() {
     );
 
     let mut out_file = File::create(args.output_file).unwrap();
-    writeln!(out_file, "{}", code).unwrap();
+    write!(out_file, "{}", code).unwrap();
 }
 
 #[derive(Parser)]

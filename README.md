@@ -5,17 +5,15 @@
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/GameBuilder202/hexagn-rust?color=7047EF&style=flat-square)
 ![Discord](https://img.shields.io/discord/1015615296939233340?color=7047EF&style=flat-square)
 
-> This repository is now the official for Hexagn - previous/legacy repository: [Hexagn C++](https://github.com/emm312/Hexagn)
-
-A simple compiler project capable of compiling Hexagn to URCL codes. With an easy-to-read syntax that is mostly inspired by the C programming language, understanding it would be easy.
+A simple compiler capable of compiling Hexagn to URCL code. With an easy-to-read C-like syntax, understanding it is easy.
 
 <p align="center"><img alt="Hexagn's syntax" src="./syntax.svg"></p>
 
-*Preview of Hexagn's syntax. Similar in C++ Hexagn.*
+*Preview of Hexagn syntax.*
 
 ## Prerequisites
 
-If you are running a Windows NT system, please use WSL (Windows Subsystem for Linux) (while you can install Rust in Windows, it is more better if it was inside a Linux environment), and if you are using MacOS or (any) Linux (distro), you can continue the installation process.
+If you are running a Windows NT system, please use WSL (Windows Subsystem for Linux) (while you can install Rust in Windows, it is better if it is inside a Linux environment), and if you are using MacOS or (any) Linux (distro), you can continue the installation process.
 
 Recommended to install the Rust programming language via [Rustup](https://rustup.rs) to get both `rustc` and `cargo`
 
@@ -32,7 +30,7 @@ Currently, there are no stable releases of Hexagn, cloning the repository direct
 cargo build --release
 cargo install --path .
 ```
-3. Hexagn would be compiled inside the `target/` directory
+3. You can now use the `hexagn` command anywhere in your shell (might require a shell restart)
 
 ## Contributing
 
@@ -44,13 +42,9 @@ Hexagn has its dedicated page hosted via GitHub pages at [notalternate.github.io
 
 What does it have to offer? A full detailed description, documentation, and installation process of the language.
 
-> However.. The previous/legacy [Hexagn C++](https://github.com/emm312/Hexagn) would not be supported in the webpages.
-
 ## Official Discord server
 
 [Visit the official Hexagn Discord server!](https://discord.gg/invite/t75crS5XBe)
-
-*Note that each updates or bulletin in the server will be related to Hexagn-rust and not C++ Hexagn*
 
 ## License
 

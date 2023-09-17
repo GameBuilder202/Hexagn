@@ -10,7 +10,6 @@ use crate::unwrap_or_err;
 
 pub struct Args {
     pub input_file: String,
-    pub output_file: String,
     pub no_main: bool,
     pub debug_symbols: bool,
     pub opt_level: u32,
@@ -41,6 +40,7 @@ pub fn compiler(args: &Args, linker: &mut Linker) -> String {
             debug_symbols: args.debug_symbols,
             standalone: args.no_main,
             pop_frame: false,
+            opt_level: args.opt_level,
         },
         linker,
     )
