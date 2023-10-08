@@ -13,38 +13,69 @@ use super::{
 type OutputGen = Box<dyn Fn() -> Result<String, Error>>;
 pub struct ImportHelper {
     imported: Vec<(PathBuf, OutputGen)>,
+    lib_paths: Vec<PathBuf>,
 }
 
 impl ImportHelper {
     pub fn new() -> Self {
-        Self { imported: Vec::new() }
+        Self {
+            imported: Vec::new(),
+            lib_paths: vec![
+                {
+                    #[cfg(target_os = "linux")]
+                    let path = PathBuf::from("/usr/lib/hexagn/hexagn-stdlib/");
+                    #[cfg(target_os = "macos")]
+                    let path = PathBuf::from("/usr/lib/hexagn/hexagn-stdlib/");
+                    #[cfg(target_os = "windows")]
+                    let path = PathBuf::from("C:\\Program Files (x86)\\hexagn\\hexagn-stdlib");
+
+                    path
+                },
+                // For dev
+                PathBuf::from("./hexagn-stdlib/"),
+            ],
+        }
+    }
+
+    pub fn add_lib_path(&mut self, path: &str) {
+        self.lib_paths.push(PathBuf::from(path))
     }
 
     pub fn import(&mut self, lib: &[String], compile_args: AstCompileArgs, linker: &mut Linker, sym: &DebugSym) {
         let path = lib.iter().collect::<PathBuf>();
 
-        if path.is_dir() {
-            for p in path.read_dir().unwrap().flatten() {
-                if p.path().is_file() {
-                    self.import(
-                        &p.path().iter().map(|path| path.to_str().unwrap().to_string()).collect::<Vec<_>>(),
-                        compile_args,
-                        linker,
-                        sym,
-                    )
-                }
-            }
-        } else if path.is_file() {
-            if self.imported.iter().map(|(p, _)| p == &path).any(|b| b) {
-                return;
-            }
+        let mut not_found = true;
 
-            if let Some(extension) = path.extension() {
-                if extension == "hxgn" {
-                    self.import_hexagn(&path, compile_args, linker)
+        for libpath in &self.lib_paths.clone() {
+            let path = libpath.join(path.clone());
+
+            if path.is_dir() {
+                for p in path.read_dir().unwrap().flatten() {
+                    if p.path().is_file() {
+                        self.import(
+                            &p.path().iter().map(|path| path.to_str().unwrap().to_string()).collect::<Vec<_>>(),
+                            compile_args,
+                            linker,
+                            sym,
+                        )
+                    }
                 }
+                not_found = false;
+            } else if path.is_file() {
+                if self.imported.iter().map(|(p, _)| p == &path).any(|b| b) {
+                    return;
+                }
+
+                if let Some(extension) = path.extension() {
+                    if extension == "hxgn" {
+                        self.import_hexagn(&path, compile_args, linker)
+                    }
+                }
+                not_found = false;
             }
-        } else {
+        }
+
+        if not_found {
             eprintln!("Error: Non existant library path at line {}", sym.lineno);
             eprintln!("{}: {}", sym.lineno, sym.val);
             exit(1)
@@ -62,6 +93,7 @@ impl ImportHelper {
                 opt_level: compile_args.opt_level,
             },
             &mut linker,
+            self,
         );
 
         self.imported.push((

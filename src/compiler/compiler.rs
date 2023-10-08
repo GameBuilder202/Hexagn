@@ -1,11 +1,14 @@
 use std::{fs::File, io::Read};
 
-use super::ast::{
-    ast_compiler::{compile_ast, AstCompileArgs},
-    make_ast, optimizer,
-};
 use super::lexer::tokenize;
 use super::linker::Linker;
+use super::{
+    ast::{
+        ast_compiler::{compile_ast, AstCompileArgs},
+        make_ast, optimizer,
+    },
+    imports::ImportHelper,
+};
 use crate::unwrap_or_err;
 
 pub struct Args {
@@ -15,7 +18,7 @@ pub struct Args {
     pub opt_level: u32,
 }
 
-pub fn compiler(args: &Args, linker: &mut Linker) -> String {
+pub fn compiler(args: &Args, linker: &mut Linker, importer: &mut ImportHelper) -> String {
     let mut src = String::new();
 
     let mut input_file = unwrap_or_err!(File::open(&args.input_file), "Unable to open input file");
@@ -43,6 +46,7 @@ pub fn compiler(args: &Args, linker: &mut Linker) -> String {
             opt_level: args.opt_level,
         },
         linker,
+        importer,
     )
     .unwrap()
 }

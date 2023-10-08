@@ -4,17 +4,20 @@ use std::io::Write;
 use clap::{ArgAction, Parser};
 
 mod compiler;
-use compiler::{linker::Linker, *};
+use compiler::{imports::ImportHelper, linker::Linker, *};
 
 pub mod util;
 
 fn main() {
     let args = Args::parse();
-    for _lib in args.lib_paths {
-        todo!()
-    }
 
     let mut main_linker = Linker::new();
+    let mut importer = ImportHelper::new();
+
+    for lib in &args.lib_paths {
+        importer.add_lib_path(lib)
+    }
+
     let code = compiler(
         &compiler::Args {
             input_file: args.input_file,
@@ -23,6 +26,7 @@ fn main() {
             opt_level: args.opt_level,
         },
         &mut main_linker,
+        &mut importer,
     );
 
     let mut out_file = File::create(args.output_file).unwrap();

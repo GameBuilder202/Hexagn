@@ -11,16 +11,13 @@ use super::{
     nodes::*,
 };
 
-pub fn compile_ast(prog: &Program, compile_args: AstCompileArgs, linker: &mut Linker) -> Result<String, std::fmt::Error> {
-    internal_compile_ast(
-        prog,
-        compile_args,
-        linker,
-        &VarStack::new(),
-        &None,
-        &mut StringsContainer::new(),
-        &mut ImportHelper::new(),
-    )
+pub fn compile_ast(
+    prog: &Program,
+    compile_args: AstCompileArgs,
+    linker: &mut Linker,
+    importer: &mut ImportHelper,
+) -> Result<String, std::fmt::Error> {
+    internal_compile_ast(prog, compile_args, linker, &VarStack::new(), &None, &mut StringsContainer::new(), importer)
 }
 
 fn internal_compile_ast(

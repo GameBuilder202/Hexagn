@@ -179,16 +179,20 @@ pub fn make_ast(src: &String, toks: &[Token]) -> Program {
             TokenType::Import => {
                 let mut lib = Vec::new();
 
+                debug_sym_str += "import ";
+
                 buf.advance();
                 while buf.in_bounds() {
-                    lib.push(buf_consume!(buf, (TokenType::Identifier), src, "Expected module name").val);
+                    let ident = buf_consume!(buf, (TokenType::Identifier), src, "Expected module name").val;
+                    lib.push(ident.clone());
                     let typ = buf_consume!(
                         buf,
                         (TokenType::Dot, TokenType::Colon, TokenType::Semicolon),
                         src,
                         "Expected '.' or ':' or ';' after module name"
-                    )
-                    .tok_type;
+                    );
+                    debug_sym_str += &format!("{}{}", ident, typ.val);
+                    let typ = typ.tok_type;
                     if typ == TokenType::Semicolon {
                         break;
                     }
