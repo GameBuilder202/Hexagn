@@ -1,16 +1,11 @@
 # Hexagn: Higher-up for URCL
 
-![GitHub top language](https://img.shields.io/github/languages/top/GameBuilder202/Hexagn?color=7047EF&style=flat-square)
-![GitHub repo size](https://img.shields.io/github/repo-size/GameBuilder202/Hexagn?color=7047EF&style=flat-square)
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/GameBuilder202/Hexagn?color=7047EF&style=flat-square)
-![Discord](https://img.shields.io/discord/1015615296939233340?color=7047EF&style=flat-square)
-
 A simple compiler capable of compiling programs written in the Hexagn programming language to URCL.
 The Hexagn language with its C-like syntax allows anyone to easily understand it.
 
 <p align="center"><img alt="Hexagn banner" src="./banner.png"></p>
 
-*Preview of Hexagn's logo and syntax; Outputting "Hello, GitHub!"*
+*Preview of the Hexagn's logo and syntax; Outputting "Hello, GitHub!"*
 
 ## Prerequisites
 
@@ -24,7 +19,7 @@ It is recommended to install the Rust programming language via ([Rustup](https:/
 
 ## Installation (unstable)
 
-Currently, there are no stable releases of Hexagn, cloning the repository directly will give you the in-development or unstable version.
+Currently, there are no stable releases of the compiler, cloning the repository directly will give you the in-development or unstable version.
 Proceed if you are willing to face consequences.
 
 #### CLONING, BUILDING AND INSTALLING
@@ -34,7 +29,7 @@ Proceed if you are willing to face consequences.
 ```sh
 $ cargo build --release; cargo install --path .
 ```
-3. Hexagn should be compiled as an executable inside the `./target/release/` directory and installed to your Cargo binaries.
+3. The compiler should be compiled as an executable inside the `./target/release/` directory and installed to your Cargo binaries.
 4. You should now be able to use the command `hexagn` anywhere, as long it is within the same shell.
 
 ## Executable details
@@ -63,25 +58,11 @@ You can support the project by contributing to it via forking the repository, co
 
 After a pull request, please be patient for maintainers to review and manage conflicts.
 
-## Resources
+Contributing to this repository renders you as a collaborator of **this compiler repository**, not the Hexagn project.
 
-### Official site
+## Legal notice
 
-The GitHub pages site, `notalternate.github.io` is still in progress, Check here again after a few days.
+The Hexagn compiler repository owned by GameBuilder202, Hosted at [GitHub](https://github.com/GameBuilder202/Hexagn) is licensed under the [Apache License, Version 2.0](LICENSE).
 
-### Documentations
-
-Hexagn documentations are still in progress, Check here again after a few days.
-
-### Discord server
-
-Did you know that Hexagn has its own dedicated Discord server?<br>
-Join and check it out from [here](https://discord.gg/invite/t75crS5XBe).
-
-**You are requried to obey the set guidelines in-order to interact within the server.
-Server guidelines are subjected to change, check announcements for guidelines change.
-Please discuss Hexagn related matters within specific channels. Further guidelines exists.**
-
-## Repository license
-
-The Hexagn compiler repository owned by GameBuilder202 and NotAlternate is licensed under the [MIT](LICENSE) license.
+The name "Hexagn" and the "Hexagn Logo" are trademarks of The Hexagn Project.
+Exclusive permission granted, SECTION-3: PERMITS of the [THP Trademark Policy](https://notalternate.github.io/hexagn/legal).
